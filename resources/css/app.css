@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+@import 'tailwindcss';
+
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    /* --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji'; */
+    --font-sans: 'Nunito', 'sans-serif';
+    --color-primary: #3D2B1F;
+    --color-golden: #996515;
+    --color-tea-green: #D0F0C0;
+}
+
+.box{
+    content: "";
+    background-color: var(--color-golden);
+    height: 80px;
+    width: 100%;
+    transform: rotate(15deg);
+    bottom: 0px;
+}
+.box-1{
+    content: "";
+    background-color: var(--color-golden);
+    height: 80px;
+    width: 100%;
+    transform: rotate(-15deg);
+    bottom: 0px;
+}
+
+@layer{
+    .btn{
+        @apply cursor-pointer rounded-xl p-4 font-bold
+    }
+}
