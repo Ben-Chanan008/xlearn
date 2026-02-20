@@ -1,3 +1,5 @@
+@props(['footer' => true])
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +12,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-tea-green">
+<body class="bg-tea-green overflow-x-hidden! max-w-[100vw]">
     <x-nav />
     <section class="px-16">
         {{ $slot }}
