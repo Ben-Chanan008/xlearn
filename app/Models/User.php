@@ -18,9 +18,15 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
+        'date_of_birth',
+        'gender',
+        'address',
+        'province',
+        'phone'
     ];
 
     /**
@@ -44,5 +50,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function fullName(): string
+    {
+        return $this->first_name . ' ' . $this->last_name;
+    }
+
+    public function initials(): string
+    {
+        return  strtoupper($this->first_name[0] . $this->last_name[0]);
     }
 }

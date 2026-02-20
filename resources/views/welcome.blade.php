@@ -1,8 +1,8 @@
-<x-layout>
+<x-layout :footer="true">
     <div class="hero grid grid-cols-[2fr_1fr] py-16">
         <div class="flex flex-col">
             <p class="text-9xl pt-9 font-bold">Learn Now <br> Benefit Later</p>
-            <span>The best way to learn anything! <a href="" class="text-primary underline">Sign up</a> now and begin your journey. Lorem, ipsum dolor sit amet consectetur adipisicing elit. Illum molestiae voluptates suscipit labore facilis. Recusandae commodi illum error earum molestiae?</span>
+            <span>The best way to learn anything! <a href="{{ route('register') }}" class="text-primary underline">Sign up</a> now and begin your journey. Lorem, ipsum dolor sit amet consectetur adipisicing elit. Illum molestiae voluptates suscipit labore facilis. Recusandae commodi illum error earum molestiae?</span>
         </div>
         <img src="{{ asset('images/hero.svg') }}" alt="hero" />
     </div>
@@ -41,7 +41,7 @@
         <div class="px-16">
             <a href="" class="text-primary underline">See more courses...</a>
         </div>
-    </section>    
+    </section>
     <section id="what-you-get" class="my-10">
         <x-header>What You Get?</x-header>
         <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Magni vel adipisci eos` similique nesciunt et odit voluptas tenetur sunt sit.</p>
@@ -95,6 +95,6 @@
                 </div>
             </div>
         </section>
-        <button class="bg-golden text-white btn">Get Started <i class="ml-3 fas fa-arrow-right-long"></i></button>
+        <a href="{{ route('register') }}" class="bg-golden text-white btn inline-block">Get Started <i class="ml-3 fas fa-arrow-right-long"></i></a>
     </section>
 </x-layout>
