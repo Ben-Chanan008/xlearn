@@ -162,6 +162,45 @@
                     @error('address') <p class="text-red-500 text-sm mt-1 px-1">{{ $message }}</p> @enderror
                 </div>
 
+                {{-- Role Selection --}}
+                <div class="space-y-4">
+                    <label class="block text-sm font-semibold text-gray-700">I am joining as a...</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {{-- Student Role --}}
+                        <label class="relative flex cursor-pointer rounded-2xl border border-gray-200 bg-white p-4 shadow-sm focus:outline-none hover:border-primary transition-all duration-200 has-checked:border-primary has-checked:border-2 has-checked:ring-2 has-checked:ring-primary/10 group">
+                            <input type="radio" name="role" value="student" class="sr-only" {{ old('role', 'student') == 'student' ? 'checked' : '' }} required>
+                            <span class="flex flex-1">
+                                <span class="flex flex-col">
+                                    <span class="block text-sm font-bold text-gray-900 group-hover:text-primary transition-colors">Student</span>
+                                    <span class="mt-1 flex items-center text-xs text-gray-500">I want to learn and improve my skills</span>
+                                </span>
+                            </span>
+                            <div class="flex shrink-0 items-center justify-center">
+                                <div class="h-10 w-10 bg-tea-green/30 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                            </div>
+                        </label>
+
+                        {{-- Instructor Role --}}
+                        <label class="relative flex cursor-pointer rounded-2xl border border-gray-200 bg-white p-4 shadow-sm focus:outline-none hover:border-primary transition-all duration-200 has-checked:border-primary has-checked:border-2 has-checked:ring-2 has-checked:ring-primary/10 group">
+                            <input type="radio" name="role" value="instructor" class="sr-only" {{ old('role') == 'instructor' ? 'checked' : '' }}>
+                            <span class="flex flex-1">
+                                <span class="flex flex-col">
+                                    <span class="block text-sm font-bold text-gray-900 group-hover:text-primary transition-colors">Instructor</span>
+                                    <span class="mt-1 flex items-center text-xs text-gray-500">I want to share knowledge and teach</span>
+                                </span>
+                            </span>
+                            <div class="flex shrink-0 items-center justify-center">
+                                <div class="h-10 w-10 bg-tea-green/30 rounded-full flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    @error('role') <p class="text-red-500 text-sm mt-1 px-1">{{ $message }}</p> @enderror
+                </div>
+
                 <button type="submit"
                         class="w-full bg-primary text-white font-bold py-4 rounded-2xl hover:opacity-90 transition duration-300 shadow-lg flex items-center justify-center space-x-2">
                     <span>Create Account</span>

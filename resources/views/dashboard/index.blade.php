@@ -13,6 +13,11 @@
             <div class="flex items-center justify-between mb-8">
                 <x-header>Available Courses</x-header>
                 <div class="flex space-x-2">
+                    @can('create', \App\Models\Course::class)
+                        <a href="{{route('courses.create')}}" class="bg-primary text-white font-bold p-3 rounded-xl hover:cursor-pointer">
+                            <i class="fas fa-book"></i> Create Course
+                        </a>
+                    @endcan
                     <button class="p-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition duration-200">
                         <i class="fas fa-th-large text-gray-500"></i>
                     </button>
@@ -24,26 +29,16 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                 @forelse($courses as $course)
-                    @php
-                        // Deterministic color and icon based on course ID or name since they're not in DB
-                        $colors = [
-                            'bg-red-100 text-red-600',
-                            'bg-blue-100 text-blue-600',
-                            'bg-yellow-100 text-yellow-600',
-                            'bg-cyan-100 text-cyan-600',
-                            'bg-green-100 text-green-600',
-                            'bg-purple-100 text-purple-600',
-                        ];
-                        $icons = ['fa-laravel', 'fa-uikit', 'fa-js', 'fa-css3-alt', 'fa-vuejs', 'fa-bullhorn', 'fa-graduation-cap', 'fa-code', 'fa-laptop-code'];
-
-                        $colorClass = $colors[$course->id % count($colors)];
-                        $iconClass = $icons[$course->id % count($icons)];
-                    @endphp
                     <a href="{{ route('courses.show', $course->slug) }}" class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300 flex flex-col group">
                         <div class="p-8 flex-grow">
                             <div class="flex items-start justify-between mb-6">
-                                <div class="w-14 h-14 {{ $colorClass }} rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition duration-300">
-                                    <i class="fab {{ $iconClass }}"></i>
+                                <div class="w-14 h-14 flex items-center justify-center text-2xl group-hover:scale-110 transition duration-300">
+                                    <img
+                                        src="{{$course->thumbnail ? asset('storage/'. $course->thumbnail) : asset('images/logo.png')}}"
+                                        alt="{{$course->slug}}"
+                                        class="rounded-2xl"
+                                    >
+                                    <i class="fab "></i>
                                 </div>
                                 @if($course->created_at->gt(now()->subDays(7)))
                                     <span class="bg-tea-green text-primary text-xs font-bold px-3 py-1 rounded-full">New</span>

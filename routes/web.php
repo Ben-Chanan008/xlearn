@@ -26,6 +26,6 @@ Route::prefix('student')->middleware(['auth'])->group(function (){
 });
 
 Route::prefix('admin')->middleware(['auth'])->group(function (){
-    Route::get('courses/create', [CourseController::class, 'create'])->name('courses.create');
+    Route::get('courses/create', [CourseController::class, 'create'])->name('courses.create')->can('create', App\Models\Course::class);
     Route::post('courses/store', [CourseController::class, 'store'])->name('courses.store');
 });
