@@ -13,6 +13,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-tea-green overflow-x-hidden! max-w-[100vw]">
+    <x-success-banner />
     <x-nav />
     <section class="px-16">
         {{ $slot }}

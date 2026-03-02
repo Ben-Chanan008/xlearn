@@ -22,80 +22,44 @@
                 </div>
             </div>
 
-            @php
-                $courses = [
-                    [
-                        'id' => 1,
-                        'title' => 'Advanced Laravel Development',
-                        'leader' => 'Sarah Johnson',
-                        'enrolled' => 1243,
-                        'icon' => 'fa-laravel',
-                        'color' => 'bg-red-100 text-red-600'
-                    ],
-                    [
-                        'id' => 2,
-                        'title' => 'UI/UX Design Masterclass',
-                        'leader' => 'Michael Chen',
-                        'enrolled' => 856,
-                        'icon' => 'fa-uikit',
-                        'color' => 'bg-blue-100 text-blue-600'
-                    ],
-                    [
-                        'id' => 3,
-                        'title' => 'Modern JavaScript Patterns',
-                        'leader' => 'Elena Rodriguez',
-                        'enrolled' => 2105,
-                        'icon' => 'fa-js',
-                        'color' => 'bg-yellow-100 text-yellow-600'
-                    ],
-                    [
-                        'id' => 4,
-                        'title' => 'Tailwind CSS for Pros',
-                        'leader' => 'David Wilson',
-                        'enrolled' => 1532,
-                        'icon' => 'fa-css3-alt',
-                        'color' => 'bg-cyan-100 text-cyan-600'
-                    ],
-                    [
-                        'id' => 5,
-                        'title' => 'Vue.js Enterprise Solutions',
-                        'leader' => 'Aisha Kamau',
-                        'enrolled' => 642,
-                        'icon' => 'fa-vuejs',
-                        'color' => 'bg-green-100 text-green-600'
-                    ],
-                    [
-                        'id' => 6,
-                        'title' => 'Digital Marketing Essentials',
-                        'leader' => 'James Thompson',
-                        'enrolled' => 3421,
-                        'icon' => 'fa-bullhorn',
-                        'color' => 'bg-purple-100 text-purple-600'
-                    ]
-                ];
-            @endphp
-
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                @foreach($courses as $course)
-                    <a href="{{ route('courses.show', $course['id']) }}" class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300 flex flex-col group">
+                @forelse($courses as $course)
+                    @php
+                        // Deterministic color and icon based on course ID or name since they're not in DB
+                        $colors = [
+                            'bg-red-100 text-red-600',
+                            'bg-blue-100 text-blue-600',
+                            'bg-yellow-100 text-yellow-600',
+                            'bg-cyan-100 text-cyan-600',
+                            'bg-green-100 text-green-600',
+                            'bg-purple-100 text-purple-600',
+                        ];
+                        $icons = ['fa-laravel', 'fa-uikit', 'fa-js', 'fa-css3-alt', 'fa-vuejs', 'fa-bullhorn', 'fa-graduation-cap', 'fa-code', 'fa-laptop-code'];
+
+                        $colorClass = $colors[$course->id % count($colors)];
+                        $iconClass = $icons[$course->id % count($icons)];
+                    @endphp
+                    <a href="{{ route('courses.show', $course->slug) }}" class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300 flex flex-col group">
                         <div class="p-8 flex-grow">
                             <div class="flex items-start justify-between mb-6">
-                                <div class="w-14 h-14 {{ $course['color'] }} rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition duration-300">
-                                    <i class="fab {{ $course['icon'] }}"></i>
+                                <div class="w-14 h-14 {{ $colorClass }} rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition duration-300">
+                                    <i class="fab {{ $iconClass }}"></i>
                                 </div>
-                                <span class="bg-tea-green text-primary text-xs font-bold px-3 py-1 rounded-full">New</span>
+                                @if($course->created_at->gt(now()->subDays(7)))
+                                    <span class="bg-tea-green text-primary text-xs font-bold px-3 py-1 rounded-full">New</span>
+                                @endif
                             </div>
 
-                            <h3 class="text-xl font-bold text-gray-800 mb-2 leading-tight group-hover:text-primary transition duration-300">{{ $course['title'] }}</h3>
+                            <h3 class="text-xl font-bold text-gray-800 mb-2 leading-tight group-hover:text-primary transition duration-300">{{ $course->name }}</h3>
 
                             <div class="space-y-3 mb-6">
                                 <div class="flex items-center text-sm text-gray-500">
                                     <i class="fas fa-user-tie w-5 text-gray-400"></i>
-                                    <span class="ml-2">By <span class="font-semibold text-gray-700">{{ $course['leader'] }}</span></span>
+                                    <span class="ml-2">By <span class="font-semibold text-gray-700">{{ $course->instructor->fullName() }}</span></span>
                                 </div>
                                 <div class="flex items-center text-sm text-gray-500">
                                     <i class="fas fa-users w-5 text-gray-400"></i>
-                                    <span class="ml-2"><span class="font-semibold text-gray-700">{{ number_format($course['enrolled']) }}</span> students enrolled</span>
+                                    <span class="ml-2"><span class="font-semibold text-gray-700">0</span> students enrolled</span>
                                 </div>
                             </div>
                         </div>
@@ -107,7 +71,13 @@
                             </div>
                         </div>
                     </a>
-                @endforeach
+                @empty
+                    <div class="col-span-full py-12 text-center bg-white rounded-3xl border border-dashed border-gray-300">
+                        <i class="fas fa-book-open text-4xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900">No courses available yet</h3>
+                        <p class="text-gray-500">Check back later for new learning opportunities.</p>
+                    </div>
+                @endforelse
             </div>
 
             {{-- Course Leaders Section --}}

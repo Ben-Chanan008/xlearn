@@ -1,150 +1,175 @@
-<x-layout>
-    <div class="mb-8">
-        <a href="{{ route('dashboard') }}" class="text-primary hover:underline flex items-center space-x-2">
-            <i class="fas fa-arrow-left"></i>
-            <span>Back to Dashboard</span>
-        </a>
-    </div>
+<x-layout :footer="true">
+    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumbs -->
+        <nav class="flex mb-8 text-sm font-medium text-gray-500" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li><a href="{{ route('dashboard') }}" class="hover:text-primary transition-colors">Dashboard</a></li>
+                <li class="flex items-center space-x-2">
+                    <i class="fas fa-chevron-right text-[10px]"></i>
+                    <span class="text-gray-900">Course Details</span>
+                </li>
+            </ol>
+        </nav>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {{-- Left Column: Course Info --}}
-        <div class="lg:col-span-2 space-y-8">
-            <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                <div class="flex items-center space-x-4 mb-6">
-                    <div class="w-16 h-16 {{ $course['color'] }} rounded-2xl flex items-center justify-center text-3xl">
-                        <i class="fab {{ $course['icon'] }}"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-800">{{ $course['title'] }}</h1>
-                        <p class="text-gray-500">Mastery Course</p>
-                    </div>
-                </div>
-
-                <div class="prose max-w-none text-gray-600 mb-8">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">Course Description</h2>
-                    <p>{{ $course['description'] }}</p>
-                </div>
-
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <!-- Left Column: Course Content -->
+            <div class="lg:col-span-2 space-y-10">
+                <!-- Course Header -->
                 <div class="space-y-4">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">What you'll learn</h2>
+                    <div class="flex flex-wrap gap-2">
+                        @php
+                            $tags = is_array($course->tags) ? $course->tags : explode(',', $course->tags ?? '');
+                        @endphp
+                        @foreach(array_filter($tags) as $tag)
+                            <span class="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full uppercase tracking-wider">
+                                {{ trim($tag) }}
+                            </span>
+                        @endforeach
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
+                        {{ $course->name }}
+                    </h1>
+                    <p class="text-xl text-gray-600 leading-relaxed">
+                        {{ Str::limit($course->description, 150) }}
+                    </p>
+
+                    <!-- Instructor & Meta -->
+                    <div class="flex flex-wrap items-center gap-6 pt-4 border-t border-gray-100">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                                <i class="fas fa-chalkboard-teacher text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 uppercase font-bold tracking-tighter">Instructor</p>
+                                <p class="font-bold text-gray-900">{{ $course->instructor->fullName() ?? 'Expert Instructor' }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-full bg-tea-green flex items-center justify-center text-primary">
+                                <i class="fas fa-calendar-alt text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 uppercase font-bold tracking-tighter">Last Updated</p>
+                                <p class="font-bold text-gray-900">{{ $course->updated_at->format('M Y') }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+                                <i class="fas fa-star text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 uppercase font-bold tracking-tighter">Rating</p>
+                                <p class="font-bold text-gray-900">4.9 (2.4k reviews)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Course Thumbnail -->
+                <div class="relative group rounded-3xl overflow-hidden shadow-2xl aspect-video bg-gray-100">
+                    <img
+                        class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                        src="{{ $course->thumbnail ? asset('storage/' . $course->thumbnail) : asset('images/LARACAST.png') }}"
+                        alt="{{ $course->name }}"
+                    >
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                    <button class="absolute inset-0 flex items-center justify-center group/play">
+                        <div class="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-xl group-hover/play:scale-110 group-hover/play:bg-primary group-hover/play:text-white transition-all duration-300">
+                            <i class="fas fa-play text-2xl ml-1"></i>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Detailed Description -->
+                <div class="prose prose-lg max-w-none">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6">Course Description</h3>
+                    <div class="text-gray-600 leading-relaxed space-y-4">
+                        {!! nl2br(e($course->description)) !!}
+                    </div>
+                </div>
+
+                <!-- What you'll learn (Dynamic enhancement) -->
+                <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+                    <h3 class="text-2xl font-bold text-gray-900">What you'll learn</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        @foreach($course['syllabus'] as $item)
+                        @php
+                            $learnPoints = include base_path('course-learns.php');
+                        @endphp
+                        @foreach($learnPoints as $point)
                             <div class="flex items-start space-x-3">
-                                <i class="fas fa-check-circle text-tea-green mt-1"></i>
-                                <span class="text-gray-600">{{ $item }}</span>
+                                <div class="mt-1 flex-shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check text-[10px]"></i>
+                                </div>
+                                <span class="text-gray-700 font-medium">{{ $point }}</span>
                             </div>
                         @endforeach
                     </div>
                 </div>
             </div>
 
-            {{-- Students Table --}}
-            <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-bold text-gray-800">Enrolled Students</h2>
-                    <span class="bg-blue-100 text-blue-600 px-4 py-1 rounded-full text-sm font-bold">
-                        {{ number_format($course['enrolled_count'] )}} Total
-                    </span>
-                </div>
+            <!-- Right Column: Enrollment Card -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-8 space-y-6">
+                    <div class="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden">
+                        <div class="p-8 space-y-8">
+                            <!-- Pricing -->
+                            <div class="flex items-baseline space-x-3">
+                                <span class="text-5xl font-black text-gray-900">${{ number_format($course->price, 2) }}</span>
+                                @if($course->discount_code)
+                                    <span class="text-xl text-gray-400 line-through">${{ number_format($course->price * 1.5, 2) }}</span>
+                                @endif
+                            </div>
 
-                @if(count($course['students']) > 0)
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="text-gray-400 text-sm border-b border-gray-100">
-                                    <th class="pb-4 font-semibold">Student Name</th>
-                                    <th class="pb-4 font-semibold">Email</th>
-                                    <th class="pb-4 font-semibold">Enrollment Date</th>
-                                    <th class="pb-4 font-semibold">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-50">
-                                @foreach($course['students'] as $student)
-                                    <tr class="text-gray-600">
-                                        <td class="py-4">
-                                            <div class="flex items-center space-x-3">
-                                                <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                                                    <i class="fas fa-user text-gray-400 text-xs"></i>
-                                                </div>
-                                                <span class="font-medium">{{ $student['name'] }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="py-4">{{ $student['email'] }}</td>
-                                        <td class="py-4">{{ $student['enrolled_at'] }}</td>
-                                        <td class="py-4">
-                                            <span class="px-2 py-1 bg-green-100 text-green-600 rounded-lg text-xs font-bold">Active</span>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                            @if($course->discount_code)
+                                <div class="flex items-center justify-between p-4 bg-tea-green/30 border border-primary/20 rounded-2xl text-primary font-bold">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-tag"></i>
+                                        <span>OFFER APPLIED</span>
+                                    </div>
+                                    <span class="bg-primary text-white px-3 py-1 rounded-lg text-xs">{{ $course->discount_code }}</span>
+                                </div>
+                            @endif
+
+                            <div class="space-y-4">
+                                <button class="w-full bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/30 transition-all active:scale-95 text-lg">
+                                    Enroll in Course
+                                </button>
+                                <button class="w-full bg-gray-50 hover:bg-gray-100 text-gray-900 font-bold py-5 rounded-2xl transition-all border border-gray-200">
+                                    Try Free Preview
+                                </button>
+                            </div>
+
+                            <div class="space-y-4 pt-4">
+                                <h4 class="font-bold text-gray-900 uppercase tracking-widest text-xs">Course Features</h4>
+                                <ul class="space-y-4">
+                                    <li class="flex justify-between items-center text-sm font-medium">
+                                        <span class="text-gray-500"><i class="fas fa-id-badge w-6 text-primary"></i> Course ID</span>
+                                        <span class="text-gray-900 font-bold">{{ $course->course_code }}</span>
+                                    </li>
+                                    <li class="flex justify-between items-center text-sm font-medium">
+                                        <span class="text-gray-500"><i class="fas fa-users w-6 text-primary"></i> Capacity</span>
+                                        <span class="text-gray-900 font-bold">{{ $course->max_students }} Students</span>
+                                    </li>
+                                    <li class="flex justify-between items-center text-sm font-medium">
+                                        <span class="text-gray-500"><i class="fas fa-infinity w-6 text-primary"></i> Access</span>
+                                        <span class="text-gray-900 font-bold">Full Lifetime</span>
+                                    </li>
+                                    <li class="flex justify-between items-center text-sm font-medium">
+                                        <span class="text-gray-500"><i class="fas fa-certificate w-6 text-primary"></i> Certificate</span>
+                                        <span class="text-gray-900 font-bold">Yes</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
-                @else
-                    <p class="text-gray-500 text-center py-8">No students enrolled yet in this preview.</p>
-                @endif
-            </div>
-        </div>
 
-        {{-- Right Column: Leader Info & Actions --}}
-        <div class="space-y-8">
-            {{-- Enrollment Card --}}
-            <div class="bg-primary rounded-3xl p-8 shadow-lg text-white">
-                <h3 class="text-2xl font-bold mb-4">Start Learning Today</h3>
-                <p class="mb-6 opacity-90">Join {{ number_format($course['enrolled_count']) }} other students and master {{ $course['title'] }}.</p>
-                <button class="w-full bg-white text-primary font-bold py-4 rounded-2xl hover:bg-gray-100 transition duration-300 flex items-center justify-center space-x-2">
-                    <span>Enroll in Course</span>
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-                <p class="text-center text-xs mt-4 opacity-75">30-Day Money Back Guarantee</p>
-            </div>
-
-            {{-- Course Leader Card --}}
-            <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                <h3 class="text-xl font-bold text-gray-800 mb-6">Course Leader</h3>
-                <div class="flex items-center space-x-4 mb-6">
-                    <div class="w-16 h-16 {{ $course['leader']['color'] }} rounded-2xl flex items-center justify-center text-2xl">
-                        <i class="fas fa-user-tie"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-gray-800">{{ $course['leader']['name'] }}</h4>
-                        <p class="text-sm text-primary font-semibold">Expert Instructor</p>
+                    <!-- Money Back Guarantee -->
+                    <div class="p-6 bg-gray-50 rounded-3xl border border-gray-100 text-center">
+                        <p class="text-sm text-gray-500 font-medium">
+                            <i class="fas fa-shield-alt text-primary mr-2"></i> 30-Day Money-Back Guarantee
+                        </p>
                     </div>
                 </div>
-                <div class="flex items-center mb-4 p-2 bg-gray-50 rounded-xl">
-                    <i class="fas fa-medal mr-2"></i>
-                    <span class="text-xs font-bold text-gray-700">Honorary Member</span>
-                </div>
-                <p class="text-gray-600 text-sm mb-6 leading-relaxed">
-                    {{ $course['leader']['bio'] }}
-                </p>
-                <div class="space-y-3 border-t border-gray-50 pt-6">
-                    <div class="flex items-center text-sm text-gray-500 space-x-2">
-                        <i class="fas fa-envelope w-6 text-primary"></i>
-                        <span>{{ $course['leader']['email'] }}</span>
-                    </div>
-                    <div class="flex items-center text-sm text-gray-500 space-x-2">
-                        <i class="fas fa-phone w-6 text-primary"></i>
-                        <span>{{ $course['leader']['phone'] }}</span>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Enquiry Form --}}
-            <div class="bg-white rounded-3xl p-8 mb-8 shadow-sm border border-gray-100">
-                <h3 class="text-xl font-bold text-gray-800 mb-6">Have Questions?</h3>
-                <form action="#" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-1">Subject</label>
-                        <input type="text" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="I'd like to know more about...">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold text-golden mb-1">Message</label>
-                        <textarea class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 h-32" placeholder="Tell us what's on your mind..."></textarea>
-                    </div>
-                    <button type="submit" class="w-full bg-golden text-white font-bold py-3 rounded-xl hover:bg-gray-700 transition duration-300">
-                        Send Enquiry
-                    </button>
-                </form>
             </div>
         </div>
     </div>
