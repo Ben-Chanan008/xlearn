@@ -22,7 +22,8 @@ Route::prefix('student')->middleware(['auth'])->group(function (){
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('courses/{course:slug}', [DashboardController::class, 'show'])->name('courses.show');
     Route::get('my-courses', [DashboardController::class, 'myCourses'])->name('my-courses');
-
+    Route::get('courses/{course}/enroll', [CourseController::class, 'enroll'])->name('courses.enroll');
+    Route::post('courses/{course}/checkout', [CourseController::class, 'checkout'])->name('courses.checkout');
 });
 
 Route::prefix('admin')->middleware(['auth'])->group(function (){

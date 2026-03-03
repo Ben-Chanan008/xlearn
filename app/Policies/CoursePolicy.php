@@ -64,4 +64,9 @@ class CoursePolicy
     {
         return false;
     }
+
+    public function enroll(User $user, Course $course): bool
+    {
+        return $user->role === 'student';
+    }
 }

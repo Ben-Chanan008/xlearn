@@ -22,11 +22,9 @@ class DashboardController extends Controller
         return view('dashboard.show', ['course' => $course->with('instructor')->first()]);
     }
 
-    public function myCourses()
+    public function myCourses(Request $request)
     {
-        // Currently, we don't have an enrollment system, so we'll show an empty list
-        // and allow the user to see how it looks.
-        $enrolledCourses = [];
+        $enrolledCourses = $request->user()->studentCourses;
 
         // motivational messages
         $messages = [
@@ -39,10 +37,10 @@ class DashboardController extends Controller
 
         $motivationalMessage = $messages[array_rand($messages)];
 
-        // Calculate average progress for the statistics section
-        $averageProgress = 0;
-        $completedCount = 0;
-        $inProgressCount = 0;
+        // Calculate statistics using the collection of enrolled courses
+        $averageProgress = $enrolledCourses->avg('pivot.course_progress') ?? 0;
+        $completedCount = $enrolledCourses->where('pivot.course_progress', 100)->count();
+        $inProgressCount = $enrolledCourses->whereBetween('pivot.course_progress', [0, 99])->count();
 
         return view('dashboard.my-courses', compact('enrolledCourses', 'motivationalMessage', 'averageProgress', 'completedCount', 'inProgressCount'));
     }

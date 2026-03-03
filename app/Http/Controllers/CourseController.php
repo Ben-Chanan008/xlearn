@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CourseRequest;
+use App\Models\CardDetail;
 use App\Models\Course;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class CourseController extends Controller
@@ -49,5 +52,50 @@ class CourseController extends Controller
             $course_code = $this->generateCode('LARAVEL CODE');
 
         return view('course.create', compact('course_code'));
+    }
+
+    public function enroll(Request $request, Course $course)
+    {
+        return view('course.enroll', compact('course'));
+    }
+
+    public function checkout(Request $request, Course $course)
+    {
+        Gate::authorize('enroll', $course);
+
+        //check seating isn't full
+        //check access is still valid
+        //
+        $request->validate([
+            'card_number' => 'required',
+            'expiry_date' => 'required|max:5',
+            'cvv' => 'required',
+            'name_on_card' => 'required'
+        ]);
+
+        $number_of_students = $course->max_students;
+        $number_of_enrolled = $course->students()->get()->count();
+
+        if($number_of_enrolled === $number_of_students){
+            if($course->status !== 'active')
+                return back()->with('error', 'Course is full, wait for the next available seats');
+        }
+
+        // charge the user. send notification of transaction
+
+        try {
+            CardDetail::create([
+                'user_id' => $request->user()->id,
+                'name_on_card' => $request->name_on_card,
+                'card_number' => $request->card_number,
+                'expiry_date' => $request->expiry_date,
+                'cvv' => Hash::make($request->cvv),
+            ]);
+
+            $course->students()->syncWithoutDetaching($request->user()->id);
+        } catch (\Exception $e) {
+            dd($e->getMessage());
+            return back()->with('error', 'Something went wrong');
+        }
     }
 }
