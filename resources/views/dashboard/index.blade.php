@@ -1,7 +1,9 @@
 <x-layout :footer="true">
     <div class="py-12 px-4 sm:px-6 lg:px-16">
         <div class="mb-10">
-            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Student Dashboard</h1>
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">
+                {{auth()->user()->isInstructor() ? 'Instructor' : 'Student'}} Dashboard
+            </h1>
             <p class="text-gray-600">Welcome back, {{ auth()->user()->first_name }}! Here's what's happening with your learning journey.</p>
         </div>
 
@@ -11,7 +13,7 @@
         {{-- Content Area - Home Tab (Course List) --}}
         <div id="home-content">
             <div class="flex items-center justify-between mb-8">
-                <x-header>Available Courses</x-header>
+                <x-header>All Courses</x-header>
                 <div class="flex space-x-2">
                     @can('create', \App\Models\Course::class)
                         <a href="{{route('courses.create')}}" class="bg-primary text-white font-bold p-3 rounded-xl hover:cursor-pointer">
@@ -50,11 +52,15 @@
                             <div class="space-y-3 mb-6">
                                 <div class="flex items-center text-sm text-gray-500">
                                     <i class="fas fa-user-tie w-5 text-gray-400"></i>
-                                    <span class="ml-2">By <span class="font-semibold text-gray-700">{{ $course->instructor->fullName() }}</span></span>
+                                    <span class="ml-2">By <span class="font-semibold text-gray-700">{{ $course->owner->fullName() }}</span></span>
                                 </div>
                                 <div class="flex items-center text-sm text-gray-500">
                                     <i class="fas fa-users w-5 text-gray-400"></i>
                                     <span class="ml-2"><span class="font-semibold text-gray-700">0</span> students enrolled</span>
+                                </div>
+                                <div class="flex space-x-1">
+                                    <i class="fas fa-calendar-alt text-gray-400"></i>
+                                    <p class="text-gray-700 text-sm">Created: {{ ($course->created_at->diffForHumans())  }}</p>
                                 </div>
                             </div>
                         </div>
@@ -74,7 +80,9 @@
                     </div>
                 @endforelse
             </div>
-
+            <div class="">
+                {{ $courses->links()  }}
+            </div>
             {{-- Course Leaders Section --}}
             <div class="mt-16">
                 <div class="flex items-center justify-between mb-8">

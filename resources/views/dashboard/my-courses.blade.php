@@ -7,7 +7,7 @@
 
         <x-tabs/>
 
-        @if(count($enrolledCourses) > 0)
+        @if($enrolledCourses->count() > 0)
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {{-- Courses List (Left 2 columns) --}}
                 <div class="lg:col-span-2 space-y-6">

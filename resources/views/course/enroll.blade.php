@@ -37,7 +37,7 @@
 
                             <div class="space-x-3 text-lg flex items-center my-3">
                                 <i class="fas fa-user-circle text-primary"></i>
-                                <p class="font-bold">{{ $course->instructor->fullName() }}</p>
+                                <p class="font-bold">{{ $course->owner->fullName() }}</p>
                             </div>
 
                             <div class="space-y-3 pt-4 border-t border-gray-100">

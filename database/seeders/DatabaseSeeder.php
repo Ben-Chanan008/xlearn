@@ -3,20 +3,32 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Course;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
+    static string $password = 'Password12@';
     /**
      * Seed the application's database.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Admin user
+        User::factory()->admin()->create([
+            'first_name' => 'Admin',
+            'last_name' => 'User',
+            'email' => 'admin@xlearn.com',
+            'password' => Hash::make(self::$password),
+        ]);
 
-        User::factory(2)->create();
+        $instructors = User::factory(10)
+            ->instructor()
+            ->hasCourses(25)
+            ->create();
+        $defaultStudent = User::factory(30)
+            ->student()
+            ->create();
     }
 }

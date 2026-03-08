@@ -13,13 +13,13 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $courses = Course::with('instructor')->latest()->get();
+        $courses = Course::with('owner')->latest()->paginate(15);
         return view('dashboard.index', compact('courses'));
     }
 
     public function show(Course $course)
     {
-        return view('dashboard.show', ['course' => $course->with('instructor')->first()]);
+        return view('dashboard.show', ['course' => $course->with('owner')->first()]);
     }
 
     public function myCourses(Request $request)
@@ -43,5 +43,21 @@ class DashboardController extends Controller
         $inProgressCount = $enrolledCourses->whereBetween('pivot.course_progress', [0, 99])->count();
 
         return view('dashboard.my-courses', compact('enrolledCourses', 'motivationalMessage', 'averageProgress', 'completedCount', 'inProgressCount'));
+    }
+
+    public function instructorCourses(Request $request)
+    {
+        if($request->user()->isInstructor()){
+            $courses = $request->user()->courses()->latest()->paginate(8);
+            return view('instructor.my-courses', compact('courses'));
+        }
+
+        abort(403);
+    }
+
+    public function instructorDashboard(Request $request)
+    {
+        $courses = $request->user()->courses()->latest()->paginate(15);
+        return view('instructor.dashboard', compact('courses'));
     }
 }

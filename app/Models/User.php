@@ -60,12 +60,12 @@ class User extends Authenticatable
 
     public function initials(): string
     {
-        return  strtoupper($this->first_name[0] . $this->last_name[0]);
+        return strtoupper($this->first_name[0] . $this->last_name[0]);
     }
 
     public function courses()
     {
-        return $this->hasMany(Course::class);
+        return $this->hasMany(Course::class, 'instructor_id');
     }
 
     public function studentCourses(): BelongsToMany
@@ -73,5 +73,20 @@ class User extends Authenticatable
         return $this->belongsToMany(Course::class, 'student_course', 'student_id', 'course_id')
             ->withPivot('course_progress', 'completed_at', 'accessed_at')
             ->withTimestamps();
+    }
+
+    public function isInstructor(): bool
+    {
+        return $this->role === 'instructor';
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->role === 'student';
     }
 }

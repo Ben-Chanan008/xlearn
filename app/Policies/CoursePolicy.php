@@ -9,19 +9,11 @@ use Illuminate\Auth\Access\Response;
 class CoursePolicy
 {
     /**
-     * Determine whether the user can view any models.
+     * Determine whether the user can manage the model (instructor/owner).
      */
-    public function viewAny(User $user): bool
+    public function manage(User $user, Course $course): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user, Course $course): bool
-    {
-        return false;
+        return $user->is($course->instructor);
     }
 
     /**
@@ -31,38 +23,6 @@ class CoursePolicy
     {
 //        dd($user->role === 'instructor');
         return $user->role === 'instructor' || $user->role === 'admin';
-    }
-
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user, Course $course): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user, Course $course): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Course $course): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Course $course): bool
-    {
-        return false;
     }
 
     public function enroll(User $user, Course $course): bool

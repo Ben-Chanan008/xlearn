@@ -15,7 +15,7 @@ class UserFactory extends Factory
     /**
      * The current password being used by the factory.
      */
-    protected static ?string $password;
+    protected static string $password = 'Password12@';
 
     /**
      * Define the model's default state.
@@ -32,13 +32,12 @@ class UserFactory extends Factory
             'gender' => Arr::random($gender),
             'email' => fake()->unique()->safeEmail(),
             'province' => 'SK',
-            'password' => static::$password ??= Hash::make('password'),
+            'password' => static::$password,
             'date_of_birth' => fake()->date(),
             'email_verified_at' => now(),
             'address' => fake()->address(),
             'phone' => fake()->phoneNumber(),
-            'role' => 'instructor'
-
+            'role' => 'student'
         ];
     }
 
@@ -49,6 +48,27 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    public function student(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'student',
+        ]);
+    }
+
+    public function instructor(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'instructor',
+        ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
         ]);
     }
 }

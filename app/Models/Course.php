@@ -26,7 +26,7 @@ class Course extends Model
         'tags',
     ];
 
-    public function instructor(): BelongsTo
+    public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'instructor_id');
     }
@@ -37,4 +37,5 @@ class Course extends Model
             ->withPivot('course_progress', 'completed_at', 'accessed_at')
             ->withTimestamps();
     }
+
 }
