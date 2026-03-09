@@ -21,16 +21,18 @@ class CourseRequest extends FormRequest
      */
     public function rules(): array
     {
+        $courseId = $this->route('course')?->id;
+
         return [
             //
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'tags' => 'required',
             'max_students' => 'required|integer|min:1',
-            'course_code' => 'required|string|max:255|unique:courses,course_code',
+            'course_code' => 'required|string|max:255|unique:courses,course_code,' . ($courseId ?? ''),
             'price' => 'required|min:0',
             'discount_code' => 'integer|min:0|max:100|nullable',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif,avif|max:2048'
         ];
     }
 }

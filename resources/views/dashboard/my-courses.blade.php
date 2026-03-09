@@ -17,12 +17,12 @@
                                 <img class="rounded-2xl" src="{{ $course->thumbnail ? asset('storage/'. $course->thumbnail) : asset('images/logo.png') }}" />
                             </div>
 
-                            <div class="flex-grow text-center md:text-left">
+                            <div class="grow text-center md:text-left">
                                 <h3 class="text-xl font-bold text-gray-800 mb-1">{{ $course->name }}</h3>
-                                <p class="text-sm text-gray-500 mb-3">By <span class="font-semibold">{{ $course->instructor->fullName() }}</span> • Last accessed {{ $course->accessed_at }}</p>
+                                <p class="text-sm text-gray-500 mb-3">By <span class="font-semibold">{{ $course->owner->fullName() }}</span> • Last accessed {{ $course->accessed_at }}</p>
 
                                 <div class="flex items-center space-x-4">
-                                    <div class="flex-grow h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="grow h-2 bg-gray-100 rounded-full overflow-hidden">
                                         <div class="h-full bg-primary transition-all duration-1000" style="width: {{ $course->pivot->course_progress }}%"></div>
                                     </div>
                                     <span class="text-sm font-bold text-gray-700">{{ $course->pivot->course_progress }} %</span>

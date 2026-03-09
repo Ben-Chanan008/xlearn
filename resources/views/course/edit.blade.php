@@ -1,13 +1,13 @@
 <x-layout :footer="false">
     <div x-data="{
-        name: '{{ old('name', 'Course Title') }}',
-        description: '{{ old('description', 'Your course description will appear here...') }}',
-        price: '{{ old('price', '0.00') }}',
-        tags: '{{ old('tags', '') }}',
-        max_students: '{{ old('max_students', '0') }}',
-        discount: '{{ old('discount_code', '0') }}',
+        name: @js($course->name),
+        description: @js($course->description),
+        price: '{{ old('price', $course->price) }}',
+        tags: '{{ old('tags', $course->tags) }}',
+        max_students: '{{ old('max_students', $course->max_students) }}',
+        discount: '{{ old('discount_code', $course->discount_code ?? 0) }}',
         thumbnail: null,
-        previewUrl: null,
+        previewUrl: '{{ $course->thumbnail ? asset('storage/' . $course->thumbnail) : null }}',
         handleFile(e) {
             const file = e.target.files[0];
             if (file) {
@@ -33,21 +33,21 @@
                         <i class="fas fa-home mr-1.5 text-xs"></i> Dashboard
                     </a>
                     <i class="fas fa-chevron-right text-[10px]"></i>
-                    <span class="text-primary font-medium">Create Course</span>
+                    <span class="text-primary font-medium">Edit Course</span>
                 </nav>
                 <h1 class="text-5xl mt-8 font-black text-primary tracking-tight">
-                    Craft Your <span class="text-golden italic">Knowledge.</span>
+                    Refine Your <span class="text-golden italic">Masterpiece.</span>
                 </h1>
-                <p class="text-gray-600 mt-2 text-lg">Bring your expertise to life with a beautiful new course.</p>
+                <p class="text-gray-600 mt-2 text-lg">Update your course details to keep your students engaged.</p>
             </div>
 
             <div class="flex items-center gap-4">
                 <a href="{{ route('dashboard') }}" class="px-6 py-3 rounded-2xl font-bold text-gray-500 hover:bg-white/50 transition-all border border-transparent hover:border-gray-200">
-                    Discard
+                    Cancel
                 </a>
                 <button type="submit" form="courseForm" class="px-8 py-3 hover:cursor-pointer bg-primary text-white rounded-2xl font-bold shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
-                    <i class="fas fa-rocket text-sm"></i>
-                    Publish Course
+                    <i class="fas fa-save text-sm"></i>
+                    Update Course
                 </button>
             </div>
         </div>
@@ -56,8 +56,9 @@
 
             {{-- Main Form Section --}}
             <div class="lg:col-span-7 space-y-8">
-                <form id="courseForm" action="{{ route('courses.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
+                <form id="courseForm" action="{{ route('courses.update', $course) }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                     @csrf
+                    @method('PUT')
 
                     {{-- Section: Identity --}}
                     <div class="bg-white/80 backdrop-blur-sm p-8 rounded-[2.5rem] shadow-sm border border-white/20 space-y-6">
@@ -80,7 +81,7 @@
                             <label for="description" class="block text-sm font-bold text-gray-700 mb-2 ml-1">What will they learn?</label>
                             <textarea name="description" id="description" rows="5" x-model="description" required
                                       class="w-full px-6 py-4 rounded-2xl border-2 border-gray-100 focus:border-primary outline-none transition-all bg-gray-50/50 resize-none font-medium"
-                                      placeholder="A compelling overview of your course content..."></textarea>
+                                      placeholder="A compelling overview of your course content...">{{ $course->description }}</textarea>
                             @error('description') <p class="text-red-500 text-xs mt-2 ml-2 font-medium">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -181,12 +182,12 @@
                                 <i class="fas fa-fingerprint text-primary/40 text-xl"></i>
                                 <div>
                                     <p class="text-[10px] uppercase tracking-widest font-black text-primary/50">Unique Course Identifier</p>
-                                    <p class="font-mono font-bold text-primary">{{ $course_code }}</p>
-                                    <input type="hidden" name="course_code" value="{{ $course_code }}">
+                                    <p class="font-mono font-bold text-primary">{{ $course->course_code }}</p>
+                                    <input type="hidden" name="course_code" value="{{ $course->course_code }}">
                                 </div>
                             </div>
                             <div class="text-right">
-                                <p class="text-xs text-primary/60 font-medium">Auto-generated</p>
+                                <p class="text-xs text-primary/60 font-medium">Identifier cannot be changed</p>
                             </div>
                         </div>
                     </div>
@@ -200,7 +201,7 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-golden animate-pulse"></span>
                         Live Preview
                     </h3>
-                    <span class="text-[10px] font-bold bg-white/50 px-2 py-0.5 rounded-full text-gray-500 border border-gray-100">Draft</span>
+                    <span class="text-[10px] font-bold bg-white/50 px-2 py-0.5 rounded-full text-gray-500 border border-gray-100">{{ ucfirst($course->status) }}</span>
                 </div>
 
                 <div class="group relative bg-white rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/10 border border-white transition-all duration-500 hover:-translate-y-2">
@@ -240,7 +241,7 @@
                                 <div class="w-6 h-6 rounded-full bg-tea-green flex items-center justify-center">
                                     <i class="fas fa-user text-[10px] text-primary"></i>
                                 </div>
-                                <p class="text-sm font-bold text-gray-500">{{ auth()->user()->fullName() }}</p>
+                                <p class="text-sm font-bold text-gray-500">{{ $course->owner->fullName() }}</p>
                             </div>
                         </div>
 

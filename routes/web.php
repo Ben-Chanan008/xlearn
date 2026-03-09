@@ -29,6 +29,9 @@ Route::prefix('student')->middleware(['auth', 'role-redirect'])->group(function 
 Route::prefix('admin')->middleware(['auth'])->group(function (){
     Route::get('courses/create', [CourseController::class, 'create'])->name('courses.create')->can('create', App\Models\Course::class);
     Route::post('courses/store', [CourseController::class, 'store'])->name('courses.store');
+    Route::delete('courses/{course}/delete', [CourseController::class, 'delete'])->name('courses.destroy')->can('manage', 'course');
+    Route::get('courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit')->can('manage', 'course');
+    Route::put('courses/{course}/update', [CourseController::class, 'update'])->name('courses.update')->can('manage', 'course');
 });
 
 Route::prefix('instructor')->middleware(['auth'])->group(function (){

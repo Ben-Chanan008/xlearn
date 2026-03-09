@@ -14,28 +14,37 @@
                        <p class="text-3xl">My Courses</p>
                     @foreach($courses as $course)
                         <div class="space-y-4">
-                            {{-- Course Card --}}
+                            {{-- Course ard --}}
                             <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row items-center group hover:shadow-md transition duration-300">
-                                <div class="w-20 h-20 {{ $course['color'] }} rounded-2xl flex items-center justify-center text-3xl mb-4 md:mb-0 md:mr-6 flex-shrink-0 group-hover:scale-105 transition duration-300">
-                                    <img class="rounded-2xl" src="{{ $course->thumbnail ? asset('storage/'. $course->thumbnail) : asset('images/logo.png') }}" />
+                                <div class="flex grow text-center md:text-left items-center gap-8">
+                                    <div class="h-full">
+                                        <img src="{{ asset('storage/' . $course->thumbnail)  }}" alt="" class="rounded-2xl w-50 h-full" />
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-800 mb-1">{{ $course->name }}</h3>
+                                        <p class="font-bold text-sm text-primary"><i class="fas fa-newspaper mr-2"></i>Course Code: {{ $course->course_code }}</p>
+                                        <p class="text-sm text-gray-500 mb-3">
+                                            <i class="fas fa-user-group"></i>
+                                            Enrolled Students: <span class="font-semibold">{{ $course->students()->count() }}</span>
+                                        </p>
+                                        <p class="text-gray-700 text-sm">
+                                            <i class="fas fa-calendar-altda"></i>
+                                            Created on: {{ ($course->created_at->format('d M Y'))  }}
+                                        </p>
+                                    </div>
                                 </div>
 
-                                <div class="flex-grow text-center md:text-left">
-                                    <h3 class="text-xl font-bold text-gray-800 mb-1">{{ $course->name }}</h3>
-                                    <p class="text-sm text-gray-500 mb-3">
-                                        <i class="fas fa-user-group"></i>
-                                        Enrolled Students: <span class="font-semibold">{{ $course->students()->count() }}</span>
-                                    </p>
-                                    <p class="text-gray-700 text-sm">Created on: {{ ($course->created_at->format('d M Y'))  }}</p>
-                                </div>
-
-                                <div class="mt-6 md:mt-0 md:ml-6 space-x-3 flex-shrink-0">
-                                    <a href="{{ route('courses.show', $course->slug) }}" class="inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-bold rounded-2xl hover:opacity-90 transition duration-300">
+                                <div class="mt-6 md:mt-0 md:ml-6 space-x-3 shrink-0">
+                                    <a href="{{ route('courses.edit', $course) }}" class="inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-bold rounded-2xl hover:opacity-90 transition duration-300">
                                         <i class="fas mr-2 fa-pencil"></i> Edit
                                     </a>
-                                    <a href="{{ route('courses.show', $course->slug) }}" class="inline-flex items-center justify-center px-6 py-3 bg-gray-200 text-red-700 font-bold rounded-2xl hover:opacity-90 transition duration-300">
-                                        <i class="fas mr-2 fa-times"></i> Close Course
-                                    </a>
+                                    <form action="{{ route('courses.destroy', $course) }}" class="inline-block" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="inline-flex hover:cursor-pointer items-center justify-center px-6 py-3 bg-gray-200 text-red-700 font-bold rounded-2xl hover:opacity-90 transition duration-300">
+                                            <i class="fas mr-2 fa-times"></i> Close Course
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>

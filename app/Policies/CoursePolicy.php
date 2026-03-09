@@ -13,7 +13,7 @@ class CoursePolicy
      */
     public function manage(User $user, Course $course): bool
     {
-        return $user->is($course->instructor);
+        return $user->is($course->owner);
     }
 
     /**

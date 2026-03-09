@@ -49,7 +49,7 @@ class CourseController extends Controller
         $course_code = $this->generateCode('XLEARN');
 
         while(Course::where(['course_code' => $course_code])->exists())
-            $course_code = $this->generateCode('LARAVEL CODE');
+            $course_code = $this->generateCode('XLEARN');
 
         return view('course.create', compact('course_code'));
     }
@@ -93,9 +93,43 @@ class CourseController extends Controller
             ]);
 
             $course->students()->syncWithoutDetaching($request->user()->id);
+            return redirect()->route('my-courses')->with('success', 'Course enrolled successfully');
         } catch (\Exception $e) {
-            dd($e->getMessage());
+//            dd($e->getMessage());
             return back()->with('error', 'Something went wrong');
         }
+    }
+
+    public function edit(Course $course)
+    {
+        Gate::authorize('manage', $course);
+
+        return view('course.edit', compact('course'));
+    }
+
+    public function update(CourseRequest $request, Course $course)
+    {
+        Gate::authorize('manage', $course);
+
+        $validated = $request->validated();
+
+        if ($request->hasFile('thumbnail')) {
+            $validated['thumbnail'] = $request->file('thumbnail')->store('courses', 'public');
+        }
+
+        $validated['slug'] = Str::slug($validated['name']);
+
+        $course->update($validated);
+
+        return redirect()->route('dashboard')->with('success', 'Course updated successfully');
+    }
+
+    public function delete(Request $request, Course $course)
+    {
+        Gate::authorize('manage', $course);
+
+        $course->delete();
+//        Possibly add a notification to notify the instructor and the fellow students
+        return back()->with('success', 'Course deleted successfully');
     }
 }
