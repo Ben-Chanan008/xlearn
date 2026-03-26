@@ -17,19 +17,11 @@ class DashboardRedirect
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check()) {
-            if (Auth::user()->isInstructor()) {
+            if (Auth::user()->isInstructor() && $request->routeIs('dashboard'))
                 return redirect()->route('instructor.dashboard');
-            }
 
-//            if (Auth::user()->isStudent()) {
-//                return redirect()->route('dashboard');
-//            }
-
-//            if (auth()->user()->isAdmin()) {
-//                // If you have an admin dashboard, redirect there.
-//                // For now, let's just allow them or redirect somewhere safe.
-//                // return redirect()->route('admin.dashboard');
-//            }
+            if(Auth::user()->isStudent() && $request->routeIs('instructor.dashboard'))
+                return redirect()->route('dashboard');
 
             return $next($request);
         }

@@ -32,7 +32,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                 @forelse($courses as $course)
                     <a href="{{ route('courses.show', $course->slug) }}" class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300 flex flex-col group">
-                        <div class="p-8 flex-grow">
+                        <div class="p-8 grow">
                             <div class="flex items-start justify-between mb-6">
                                 <div class="w-14 h-14 flex items-center justify-center text-2xl group-hover:scale-110 transition duration-300">
                                     <img

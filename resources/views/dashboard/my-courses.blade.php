@@ -13,7 +13,7 @@
                 <div class="lg:col-span-2 space-y-6">
                     @foreach($enrolledCourses as $course)
                         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row items-center group hover:shadow-md transition duration-300">
-                            <div class="w-20 h-20 {{ $course['color'] }} rounded-2xl flex items-center justify-center text-3xl mb-4 md:mb-0 md:mr-6 flex-shrink-0 group-hover:scale-105 transition duration-300">
+                            <div class="w-20 h-20 {{ $course['color'] }} rounded-2xl flex items-center justify-center text-3xl mb-4 md:mb-0 md:mr-6 shrink-0 group-hover:scale-105 transition duration-300">
                                 <img class="rounded-2xl" src="{{ $course->thumbnail ? asset('storage/'. $course->thumbnail) : asset('images/logo.png') }}" />
                             </div>
 
@@ -29,8 +29,8 @@
                                 </div>
                             </div>
 
-                            <div class="mt-6 md:mt-0 md:ml-6 flex-shrink-0">
-                                <a href="{{ route('courses.show', $course->slug) }}" class="inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-bold rounded-2xl hover:opacity-90 transition duration-300">
+                            <div class="mt-6 md:mt-0 md:ml-6 shrink-0">
+                                <a href="{{ route('courses.learn', $course->slug) }}" class="inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-bold rounded-2xl hover:opacity-90 transition duration-300">
                                     {{ $course->pivot->course_progress == 100 ? 'Review' : 'Continue' }}
                                 </a>
                             </div>

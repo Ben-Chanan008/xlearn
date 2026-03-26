@@ -74,7 +74,7 @@
                             src="{{ $course->thumbnail ? asset('storage/' . $course->thumbnail) : 'https://placeholder.co/800x400' }}"
                             alt="{{ $course->name }}"
                         >
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                        <div class="absolute inset-0 bg-linear-to-t from-black/40 to-transparent"></div>
                         <button class="absolute inset-0 flex items-center justify-center group/play">
                             <div class="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-xl group-hover/play:scale-110 group-hover/play:bg-primary group-hover/play:text-white transition-all duration-300">
                                 <i class="fas fa-play text-2xl ml-1"></i>

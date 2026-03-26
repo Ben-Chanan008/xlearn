@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Dashboard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -19,11 +21,35 @@ class DashboardController extends Controller
 
     public function show(Course $course)
     {
-        return view('dashboard.show', ['course' => $course->with('owner')->first()]);
+        return view('dashboard.show', ['course' => Course::with('owner')->find($course->id)]);
+    }
+
+    public function learn(Course $course)
+    {
+        $course->load(['owner', 'students']);
+
+        // Ensure student is enrolled
+        if (!$course->students->contains(Auth::user())) {
+            return redirect()->route('courses.show', $course->slug)->with('error', 'You are not enrolled in this course.');
+        }
+
+        $pivot = $course->students->where('id', Auth::user()->id)->first()->pivot;
+        $progress = $pivot->course_progress;
+        $studentCount = $course->students->count();
+
+        // Mocking instructor online status for now
+        $instructorOnline = true; // In a real app, you'd check this via a session or similar
+
+        return view('student.course-learn', compact('course', 'progress', 'studentCount', 'instructorOnline'));
     }
 
     public function myCourses(Request $request)
     {
+//        $lastActivity = DB::table('sessions')
+//            ->where('id', session()->getId())
+//            ->value('last_activity') * 3600;
+//
+
         $enrolledCourses = $request->user()->studentCourses;
 
         // motivational messages
@@ -42,7 +68,14 @@ class DashboardController extends Controller
         $completedCount = $enrolledCourses->where('pivot.course_progress', 100)->count();
         $inProgressCount = $enrolledCourses->whereBetween('pivot.course_progress', [0, 99])->count();
 
-        return view('dashboard.my-courses', compact('enrolledCourses', 'motivationalMessage', 'averageProgress', 'completedCount', 'inProgressCount'));
+        return view('dashboard.my-courses', compact(
+            'enrolledCourses',
+            'motivationalMessage',
+            'averageProgress',
+            'completedCount',
+            'inProgressCount'
+            )
+        );
     }
 
     public function instructorCourses(Request $request)
