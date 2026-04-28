@@ -99,7 +99,7 @@
                             @endphp
                             @foreach($learnPoints as $point)
                                 <div class="flex items-start space-x-3">
-                                    <div class="mt-1 flex-shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+                                    <div class="mt-1 shrink-0 w-5 h-5 bg-primary/10 text-primary rounded-full flex items-center justify-center">
                                         <i class="fas fa-check text-[10px]"></i>
                                     </div>
                                     <span class="text-gray-700 font-medium">{{ $point }}</span>
@@ -170,6 +170,11 @@
                                 </div>
                             </div>
                         </div>
+                        @can('manage', $course)
+                            <a href="{{ route('courses.edit', $course) }}" class="w-full block text-center bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/30 transition-all active:scale-95 text-lg">
+                                <i class="fas fa-pencil"></i>   Edit Course
+                            </a>    
+                        @endcan
 
                         <!-- Money Back Guarantee -->
                         <div class="p-6 bg-gray-50 rounded-3xl border border-gray-100 text-center">

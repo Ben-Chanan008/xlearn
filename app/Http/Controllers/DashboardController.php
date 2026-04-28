@@ -45,11 +45,6 @@ class DashboardController extends Controller
 
     public function myCourses(Request $request)
     {
-//        $lastActivity = DB::table('sessions')
-//            ->where('id', session()->getId())
-//            ->value('last_activity') * 3600;
-//
-
         $enrolledCourses = $request->user()->studentCourses;
 
         // motivational messages

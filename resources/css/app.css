@@ -38,3 +38,17 @@
         @apply cursor-pointer rounded-xl p-4 font-bold
     }
 }
+
+.transition-progress{
+    animation: progress-bar .8s ease-in-out ;
+}
+
+@keyframes progress-bar {
+    0%{
+        width: 0%;
+    }
+
+    100%{
+        width: 100%;
+    }
+}

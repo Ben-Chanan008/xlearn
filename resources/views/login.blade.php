@@ -19,7 +19,7 @@
                         </span>
                         <input type="email" name="email" id="email" required
                                class="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition duration-200 bg-gray-50 focus:bg-white"
-                               placeholder="you@example.com">
+                               placeholder="you@example.com" value="{{ old('email') }}">
                     </div>
                     @error('email') <p class="text-red-500 text-sm mt-1 px-1">{{ $message }}</p> @enderror
                 </div>
@@ -48,7 +48,7 @@
                 </div>
 
                 <button type="submit"
-                        class="w-full bg-primary text-white font-bold py-4 rounded-2xl hover:opacity-90 transition duration-300 shadow-lg flex items-center justify-center space-x-2">
+                        class="w-full hover:cursor-pointer bg-primary text-white font-bold py-4 rounded-2xl hover:opacity-90 transition duration-300 shadow-lg flex items-center justify-center space-x-2">
                     <span>Sign In</span>
                     <i class="fas fa-arrow-right text-sm"></i>
                 </button>

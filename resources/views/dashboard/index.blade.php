@@ -29,6 +29,11 @@
                 </div>
             </div>
 
+            <div class="w-full my-4 p-3 bg-gray-100 rounded-xl flex gap-2 items-center">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="text" class="w-full outline-0" placeholder="Search..."/>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                 @forelse($courses as $course)
                     <a href="{{ route('courses.show', $course->slug) }}" class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300 flex flex-col group">

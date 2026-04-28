@@ -77,7 +77,7 @@
                                     <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400">
                                         <i class="fas fa-user-circle"></i>
                                     </span>
-                                    <input type="text" name="name_on_card" id="name_on_card" value="{{ old('name_on_card') }}" required
+                                    <input type="text" name="name_on_card" id="name_on_card" value="{{ auth()->user()->fullName() }}" required readonly
                                            class="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition duration-200 bg-gray-50 focus:bg-white"
                                            placeholder="John Doe">
                                 </div>
