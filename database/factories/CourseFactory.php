@@ -23,7 +23,7 @@ class CourseFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name),
             'description' => fake()->paragraphs(3, true),
-            'thumbnail' => 'https://placehold.co/56x56',
+            'thumbnail' => 'images/logo.png',
             'price' => fake()->randomFloat(2, 10, 100),
             'discount_code' => fake()->optional()->bothify('DISCOUNT-####'),
             'instructor_id' => User::factory()->instructor(),
