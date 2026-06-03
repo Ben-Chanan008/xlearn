@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Course;
+use App\Models\CourseSection;
+use App\Models\CourseSectionsContent;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -27,8 +29,19 @@ class DatabaseSeeder extends Seeder
             ->instructor()
             ->hasCourses(25)
             ->create();
+
         $defaultStudent = User::factory(30)
             ->student()
             ->create();
+
+        // Course::all()->each(function (Course $course) {
+        //     $sections = $course->courseSections()->saveMany(
+        //         CourseSection::factory(4)->make()
+        //     );
+
+        //     foreach ($sections as $section) {
+        //         CourseSectionsContent::factory(3)->for($section)->create();
+        //     }
+        // });
     }
 }

@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
-use App\Models\Dashboard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -19,14 +17,25 @@ class DashboardController extends Controller
         return view('dashboard.index', compact('courses'));
     }
 
+    public function isEnrolled(Course $course)
+    {
+        return $course->students()->where(['student_id' => Auth::id()])->exists();
+    }
+
     public function show(Course $course)
     {
-        return view('dashboard.show', ['course' => Course::with('owner')->find($course->id)]);
+        $isEnrolled = $this->isEnrolled($course);
+
+        if($isEnrolled){
+            return redirect()->route('courses.learn', $course->slug);
+        }
+
+        return view('dashboard.show', ['course' => Course::with('owner')->find($course->id), 'isEnrolled' => $isEnrolled]);
     }
 
     public function learn(Course $course)
     {
-        $course->load(['owner', 'students']);
+        $course->load(['owner', 'students', 'courseSections.sectionContents']);
 
         // Ensure student is enrolled
         if (!$course->students->contains(Auth::user())) {

@@ -128,7 +128,7 @@ class CourseController extends Controller
     {
         Gate::authorize('manage', $course);
 
-        $course->delete();
+        $course->delete($course->id);
 //        Possibly add a notification to notify the instructor and the fellow students
         return back()->with('success', 'Course deleted successfully');
     }

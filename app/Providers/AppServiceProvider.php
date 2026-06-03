@@ -24,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
         //
         Model::unguard();
 
-        Model::preventLazyLoading();
+        // Model::preventLazyLoading();
 
         Password::defaults(function () {
             return $this->app->isProduction()

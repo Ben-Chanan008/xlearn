@@ -137,6 +137,7 @@
                                     <a href="{{ route('courses.enroll', $course) }}" class="w-full block text-center bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/30 transition-all active:scale-95 text-lg">
                                         Enroll in Course
                                     </a>
+                        
                                     <button class="w-full bg-gray-50 hover:bg-gray-100 text-gray-900 font-bold py-5 rounded-2xl transition-all border border-gray-200">
                                         Try Free Preview
                                     </button>
