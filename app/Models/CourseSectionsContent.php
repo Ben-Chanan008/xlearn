@@ -20,4 +20,9 @@ class CourseSectionsContent extends Model
     {
         return $this->belongsTo(CourseSection::class);
     }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(AssignmentSubmission::class);
+    }
 }

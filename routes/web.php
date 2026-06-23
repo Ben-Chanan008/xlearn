@@ -25,6 +25,7 @@ Route::prefix('student')->middleware(['auth'])->group(function (){
     Route::get('my-courses', [DashboardController::class, 'myCourses'])->name('my-courses');
     Route::get('courses/{course}/enroll', [CourseController::class, 'enroll'])->name('courses.enroll')->can('enroll', 'course');
     Route::post('courses/{course}/checkout', [CourseController::class, 'checkout'])->name('courses.checkout');
+    Route::post('submit-assignment', [CourseController::class, 'submitAssignment'])->name('courses.submit-assignment');
 });
 
 Route::prefix('admin')->middleware(['auth'])->group(function (){

@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CourseRequest;
 use App\Models\CardDetail;
 use App\Models\Course;
-use Illuminate\Support\Facades\Gate;
+use App\Models\CourseSectionsContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -29,7 +31,7 @@ class CourseController extends Controller
     {
         $validated = $request->validated();
 
-        $validated['instructor_id'] = auth()->id();
+        $validated['instructor_id'] = Auth::id();
         $validated['slug'] = Str::slug($validated['name']);
 
         if ($request->hasFile('thumbnail')) {
@@ -132,4 +134,31 @@ class CourseController extends Controller
 //        Possibly add a notification to notify the instructor and the fellow students
         return back()->with('success', 'Course deleted successfully');
     }
+
+    public function submitAssignment(Request $request, CourseSectionsContent $courseSectionContent)
+    {
+        $course = $courseSectionContent->courseSection->course;
+        $request->validate([
+            'course_id' => 'required|exists:courses,id',
+            'assignment' => 'required|file|mimes:pdf,doc,docx|max:4096', // Max size 4MB
+        ]);
+
+        // Check if the user is enrolled in the course
+        if (Gate::denies('enroll', $course)) {
+            return back()->with('error', 'You are not enrolled in this course.');
+        }
+
+        // Store the assignment file
+        $path = $request->file('assignment')->store("assignments/course-$course->id/section-{$courseSectionContent->courseSection->section_name}", 'public');
+
+        // Save the assignment submission to the database (assuming you have a model for it)
+        $courseSectionContent->assignments()->create([
+            'user_id' => Auth::id(),
+            'assignment_file' => $path,
+        ]);
+
+        //Notify the instructor of the submission (assuming you have a notification system in place)
+
+        return back()->with('success', 'Assignment submitted successfully.');
+    } 
 }

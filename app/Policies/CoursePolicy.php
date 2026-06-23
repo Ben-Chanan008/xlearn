@@ -29,4 +29,9 @@ class CoursePolicy
     {
         return $user->role === 'student';
     }
+
+    public function enrolled(User $user, Course $course): bool
+    {
+        return $course->students()->where('user_id', $user->id)->exists();
+    }
 }
