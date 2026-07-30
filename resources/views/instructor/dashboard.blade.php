@@ -8,7 +8,7 @@
         </div>
 
         {{-- Tabs Section --}}
-        <x-tabs />
+        <x-dashboard-tab />
 
         {{-- Content Area - Home Tab (Instructor's Courses) --}}
         <div id="home-content">

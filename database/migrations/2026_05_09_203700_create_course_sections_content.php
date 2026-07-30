@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('content_name');
             $table->string('content_information');
             $table->longText('files')->nullable();
-            $table->enum('content_type', ['assignment', 'information']);
+            $table->boolean('hasAssignment')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

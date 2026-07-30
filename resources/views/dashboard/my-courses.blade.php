@@ -5,7 +5,7 @@
             <p class="text-gray-600">See your course status and complete your course. Get to the next level!</p>
         </div>
 
-        <x-tabs/>
+        <x-dashboard-tab/>
 
         @if($enrolledCourses->count() > 0)
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

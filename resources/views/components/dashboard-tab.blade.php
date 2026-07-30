@@ -8,7 +8,7 @@ $activeClass = 'border-primary rounded-t-lg active group text-primary border-pri
         <li class="mr-2">
             <a href="{{ auth()->user()->isInstructor() ? route('instructor.dashboard') : route('dashboard') }}"
                class="inline-block p-4 border-b-2 {{ (request()->routeIs('dashboard') || request()->routeIs('instructor.dashboard')) ?  $activeClass : $inActiveClass }}" aria-current="page">
-                <i class="fas fa-home mr-2"></i>Home
+                <i class="fas fa-home mr-2"></i>Courses
             </a>
         </li>
         @if(auth()->user()->isStudent())

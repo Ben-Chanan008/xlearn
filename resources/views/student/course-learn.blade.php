@@ -1,9 +1,4 @@
-﻿@php
-    $inActiveClass = 'border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 transition duration-200';
-    $activeClass = 'border-primary rounded-t-lg active group text-primary border-primary';
-@endphp
-
-@push('scripts')
+﻿@push('scripts')
     <script>
         window.addEventListener('DOMContentLoaded', () => {
             const assignmentForm = document.getElementById('assignment-submit');
@@ -41,6 +36,29 @@
 
             });
 
+            const markAsDone = () => {
+                const markAsDoneButtons = document.querySelector('.mark-as-done');
+                markAsDoneButtons.addEventListener('click', () => {
+                        markAsDoneButtons.classList.toggle('bg-primary');
+                        markAsDoneButtons.classList.toggle('text-white');
+                        markAsDoneButtons.classList.toggle('bg-gray-50');
+                        markAsDoneButtons.classList.toggle('text-gray-700');
+                    });
+
+                // fetch('/mark-as-done', {
+                //     method: 'POST',
+                //     headers: {
+                //         'Content-Type': 'application/json',
+                //     },
+                //     body: JSON.stringify({
+                //         '_token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                //         'section_content_id': ,
+                //     })
+                // });  
+            };
+
+            markAsDone();
+
 
             const sectionButtons = document.querySelectorAll('.js-section-toggle');
             const sectionDetails = document.querySelectorAll('.js-section-detail');
@@ -77,72 +95,34 @@
 @endpush
 
 <x-layout :footer="false">
-    <div class="py-8 px-4 sm:px-6 lg:px-8">
-        <!-- Back to Courses -->
-        <a href="{{ route('my-courses') }}" class="inline-flex items-center text-sm font-bold text-primary mb-6 hover:-translate-x-1 transition-transform">
-            <i class="fas fa-arrow-left mr-2"></i> Back to My Courses
-        </a>
-
-        <x-header>{{ $course->name }}</x-header>
-
-        <div class="mb-8 border-b border-gray-200">
-            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="dashboard-tabs">
-                <li class="mr-2">
-                    <a href="{{ auth()->user()->isInstructor() ? route('instructor.dashboard') : route('dashboard') }}"
-                       class="inline-block p-4 border-b-2 {{ (request()->routeIs('dashboard') || request()->routeIs('instructor.dashboard')) ? $activeClass : $inActiveClass }}"
-                       aria-current="page">
-                        <i class="fas fa-book-open mr-2"></i>Course
-                    </a>
-                </li>
-                @if(auth()->user()->isStudent())
-                    <li class="mr-2">
-                        <a href="{{ route('my-courses') }}"
-                           class="inline-block p-4 border-b-2 {{ request()->routeIs('my-courses') ? $activeClass : $inActiveClass }}">
-                            <i class="fas fa-user-group mr-2"></i>Participants
-                        </a>
-                    </li>
-                @endif
-                @if(auth()->user()->isInstructor())
-                    <li class="mr-2">
-                        <a href="{{ route('instructor.courses') }}"
-                           class="inline-block p-4 border-b-2 {{ request()->routeIs('instructor.courses') ? $activeClass : $inActiveClass }}">
-                            <i class="fas fa-chalkboard-teacher mr-2"></i>Grades
-                        </a>
-                    </li>
-                @endif
-                <li class="mr-2">
-                    <a href="#" class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 transition duration-200">
-                        <i class="fas fa-certificate mr-2"></i>Certificates
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
+    <x-student-course-tab :course="$course" />
 
     <div class="grid grid-cols-[380px_1fr] gap-8 mb-8">
         <div class="p-8 bg-white rounded-3xl border border-gray-200 shadow-sm">
             <div class="flex items-center gap-x-4 mb-6">
-                    <i class="fas fa-bars"></i>
-                    <p class="text-lg font-bold">Course Sections</p>
+                <i class="fas fa-bars"></i>
+                <p class="text-lg font-bold">Course Sections</p>
             </div>
 
-            @forelse($course->courseSections as $section)
-                <button type="button"
-                        data-section="{{ $section->id }}"
-                        class="js-section-toggle w-full text-left rounded-xl p-3 px-4 bg-primary text-white hover:cursor-pointer hover:scale-[.985] hover:transition-transform">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="flex gap-x-2 items-center">
-                            <span class="block h-2 w-2 rounded-full bg-white"></span>
-                            <p class="font-semibold">{{ $section->section_name }}</p>
+            <div class="space-y-4">
+                @forelse($course->courseSections as $section)
+                    <button type="button"
+                            data-section="{{ $section->id }}"
+                            class="js-section-toggle w-full text-left rounded-xl p-3 px-4 bg-primary text-white hover:cursor-pointer hover:scale-[.985] hover:transition-transform">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex gap-x-2 items-center">
+                                <span class="block h-2 w-2 rounded-full bg-white"></span>
+                                <p class="font-semibold">{{ $section->section_name }}</p>
+                            </div>
                         </div>
+                    </button>
+                @empty
+                    <div class="rounded-3xl border border-gray-300 bg-gray-50 p-6 text-center">
+                        <p class="font-semibold text-gray-900">No sections yet</p>
+                        <p class="text-sm text-gray-500">Your instructor has not added any course sections yet.</p>
                     </div>
-                </button>
-            @empty
-                <div class="rounded-3xl border border-gray-300 bg-gray-50 p-6 text-center">
-                    <p class="font-semibold text-gray-900">No sections yet</p>
-                    <p class="text-sm text-gray-500">Your instructor has not added any course sections yet.</p>
-                </div>
-            @endforelse
+                @endforelse
+            </div>
         </div>
 
         <div class="p-8 bg-white rounded-3xl border border-gray-200 shadow-sm">
@@ -189,9 +169,13 @@
                                     <div class="">
                                         <div class="flex justify-between items-center">
                                             <h4 class="text-lg font-bold text-gray-900">{{ $content->content_name }}</h4>
-                                            @if($content->content_type === 'assignment')
-                                            <p class="mt-1 bg-gray-50 rounded-2xl py-2 px-4 text-sm font-semibold text-gray-700"><i class="fas fa-check text-tea-green"></i> Has Assignment</p>
-                                            @endif
+                                            <div class="inline-flex gap-3">
+                                                @if($content->content_type === 'assignment')
+                                                <p class="mt-1 bg-gray-50 rounded-2xl py-2 px-4 text-sm font-semibold text-gray-700"><i class="fas fa-check text-tea-green"></i> Has Assignment</p>
+                                                @endif
+                                                <button class="mt-1 mark-as-done bg-gray-500 rounded-2xl py-2 px-4 text-sm font-semibold hover:bg-primary hover:cursor-pointer hover:text-white shadow-lg
+                                                text-gray-300"><i class="fas fa-check text-tea-green"></i> Mark As Done</button>
+                                            </div>
                                         </div> 
                                     </div>
 
@@ -211,7 +195,8 @@
                                     @if($content->content_type === 'assignment')
                                         <div class="mt-4 gap-3">
                                             <p class="font-bold uppercase my-3 text-sm">Assignments</p>
-                                            <form action="" id="assignment-submit" enctype="multipart/form-data">
+                                            <form action="{{ route('courses.submit-assignment', $content->id) }}" method="POST" id="assignment-submit" enctype="multipart/form-data">
+                                                @csrf
                                                 <label for="assignment" class="hover:cursor-pointer my-4">
                                                     <div class="p-8 border border-dashed rounded-xl text-center ">
                                                         <div id="preview"></div>
@@ -221,10 +206,13 @@
                                                         </div>
                                                     </div>
                                                 </label>
-                                                <input type="file" id="assignment" name="assignment" class="hidden" multiple>
+                                                <input type="file" id="assignment" name="assignment[]" class="hidden" multiple>
                                                 <button type="submit" class="mt-3 inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-bold hover:cursor-pointer text-white transition hover:bg-primary/90">
                                                     Submit Assignment
                                                 </button>
+                                                @error('assignment')
+                                                    <p class="text-red-500 my-2 text-sm">{{ $message }}</p>
+                                                @enderror
                                             </form>
                                             <span class="inline-block mt-3 text-xs font-semibold text-slate-600">
                                                 Deadline: To be confirmed

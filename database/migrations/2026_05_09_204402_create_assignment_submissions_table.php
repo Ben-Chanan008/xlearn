@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(CourseSectionsContent::class, 'course_sections_content_id')->constrained()->cascadeOnDelete();
             $table->longText('assignment_file');
-            $table->foreignIdFor(User::class, 'students_id')->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(User::class, 'student_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
             $table->softDeletes();
         });

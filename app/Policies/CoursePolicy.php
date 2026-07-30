@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Support\Facades\Auth;
 
 class CoursePolicy
 {
@@ -32,6 +33,6 @@ class CoursePolicy
 
     public function enrolled(User $user, Course $course): bool
     {
-        return $course->students()->where('user_id', $user->id)->exists();
+        return $course->students()->where(['student_id' => Auth::id()])->exists();
     }
 }

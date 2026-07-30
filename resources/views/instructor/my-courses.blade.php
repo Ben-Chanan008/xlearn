@@ -5,7 +5,7 @@
             <p class="text-gray-600">Overview of courses you are teaching and student progress.</p>
         </div>
 
-        <x-tabs/>
+        <x-dashboard-tab/>
 
         @if($courses->count() > 0)
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

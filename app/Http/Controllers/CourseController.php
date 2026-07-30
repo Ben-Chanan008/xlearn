@@ -137,28 +137,49 @@ class CourseController extends Controller
 
     public function submitAssignment(Request $request, CourseSectionsContent $courseSectionContent)
     {
+        // dd($request->all());
         $course = $courseSectionContent->courseSection->course;
         $request->validate([
-            'course_id' => 'required|exists:courses,id',
-            'assignment' => 'required|file|mimes:pdf,doc,docx|max:4096', // Max size 4MB
+            'assignment' => ['required', 'array'],
+            'assignment.*' => 'file|mimes:pdf,doc,docx|max:4096', // Max size 4MB
         ]);
 
+        // $response = Gate::inspect('enrolled', $course);
         // Check if the user is enrolled in the course
-        if (Gate::denies('enroll', $course)) {
-            return back()->with('error', 'You are not enrolled in this course.');
+        if (Gate::denies('enrolled', $course)) {
+            return redirect()->back()->with('error', 'You are not enrolled in this course.');
         }
+        dd($request->file('assignment'));
 
-        // Store the assignment file
-        $path = $request->file('assignment')->store("assignments/course-$course->id/section-{$courseSectionContent->courseSection->section_name}", 'public');
+        try{
+            // Store the assignment file
+            foreach ($request->file('assignment') as $file) {
+                $path = $file->store("assignments/course-$course->course_code/section-#{$courseSectionContent->courseSection->id}", 'public');
 
-        // Save the assignment submission to the database (assuming you have a model for it)
-        $courseSectionContent->assignments()->create([
-            'user_id' => Auth::id(),
-            'assignment_file' => $path,
-        ]);
+                // Save the assignment submission to the database (assuming you have a model for it)
+                $courseSectionContent->assignments()->create([
+                    'students_id' => Auth::id(),
+                    'assignment_file' => $path,
+                ]);
+            }
+            // $path = $request->file('assignment')->store("assignments/course-$course->course_code/section-#{$courseSectionContent->courseSection->id}", 'public');
 
-        //Notify the instructor of the submission (assuming you have a notification system in place)
+            // Save the assignment submission to the database (assuming you have a model for it)
+            // $courseSectionContent->assignments()->create([
+            //     'students_id' => Auth::id(),
+            //     'assignment_file' => $path,
+            // ]);
 
-        return back()->with('success', 'Assignment submitted successfully.');
+            //Notify the instructor of the submission (assuming you have a notification system in place)
+
+            return back()->with('success', 'Assignment submitted successfully.');
+        } catch (\Exception $e) {
+            dd($e->getMessage());
+        }
     } 
+
+    public function showGrades(Request $request, Course $course)
+    {
+        return view('student.course-grades', compact('course'));
+    }
 }
