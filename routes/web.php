@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -10,13 +11,33 @@ Route::get('/', function () {
 
 Route::view('sign-in', 'login')->name('login')->middleware('guest');
 Route::post('login', [AuthController::class, 'login'])->name('login.post')->middleware('guest');
+
 Route::view('register', 'register')->name('register')->middleware('guest');
 Route::post('sign-up', [AuthController::class, 'register'])->name('register.post')->middleware('guest');
-Route::view('forgot-password', 'auth.forgot-password')->name('password.request')->middleware('guest');
+
 Route::get('logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+Route::view('forgot-password', 'auth.forgot-password')->name('password.request')->middleware('guest');
 
 Route::prefix('student')->middleware(['auth'])->group(function (){
-    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('courses/{id}', [DashboardController::class, 'show'])->name('courses.show');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('role-redirect');
+    Route::get('courses/{course:slug}', [DashboardController::class, 'show'])->name('courses.show');
+    Route::get('courses/{course:slug}/learn', [DashboardController::class, 'learn'])->name('courses.learn');
     Route::get('my-courses', [DashboardController::class, 'myCourses'])->name('my-courses');
+    Route::get('courses/{course}/enroll', [CourseController::class, 'enroll'])->name('courses.enroll')->can('enroll', 'course');
+    Route::post('courses/{course}/checkout', [CourseController::class, 'checkout'])->name('courses.checkout');
+    Route::get('courses/{course}/grades', [CourseController::class, 'showGrades'])->name('course.grades');
+    Route::post('submit-assignment/{courseSectionContent}', [CourseController::class, 'submitAssignment'])->name('courses.submit-assignment');
+});
+
+Route::prefix('admin')->middleware(['auth'])->group(function (){
+    Route::get('courses/create', [CourseController::class, 'create'])->name('courses.create')->can('create', App\Models\Course::class);
+    Route::post('courses/store', [CourseController::class, 'store'])->name('courses.store');
+    Route::delete('courses/{course}/delete', [CourseController::class, 'delete'])->name('courses.destroy')->can('manage', 'course');
+    Route::get('courses/{course}/edit', [CourseController::class, 'edit'])->name('courses.edit')->can('manage', 'course');
+    Route::put('courses/{course}/update', [CourseController::class, 'update'])->name('courses.update')->can('manage', 'course');
+});
+
+Route::prefix('instructor')->middleware(['auth', 'role-redirect'])->group(function (){
+    Route::get('my-courses', [DashboardController::class, 'instructorCourses'])->name('instructor.courses');
+    Route::get('dashboard', [DashboardController::class, 'instructorDashboard'])->name('instructor.dashboard')->middleware('role-redirect');
 });

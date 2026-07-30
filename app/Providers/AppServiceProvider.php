@@ -24,10 +24,14 @@ class AppServiceProvider extends ServiceProvider
         //
         Model::unguard();
 
+        // Model::preventLazyLoading();
+
         Password::defaults(function () {
             return $this->app->isProduction()
                 ? Password::min(8)->max(16)->symbols()->mixedCase()->uncompromised(1)
                 : Password::min(8)->max(16)->symbols()->mixedCase();
         });
+
+
     }
 }

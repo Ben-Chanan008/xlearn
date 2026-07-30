@@ -14,7 +14,7 @@ class AuthController extends Controller
     {
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => Password::defaults()
+            'password' => 'required'
         ]);
 
         $remember = $request->remember === 'on';
@@ -24,6 +24,8 @@ class AuthController extends Controller
 
             return redirect()->route('dashboard');
         };
+
+        return back()->withErrors(['email' => 'Credentials do not match our records!']);
     }
 
     public function logout(Request $request)
@@ -47,7 +49,8 @@ class AuthController extends Controller
             'gender' => 'required',
             'address' => 'required',
             'province' => 'required',
-            'phone' => 'required'
+            'phone' => 'required',
+            'role' => 'required'
         ]);
 
         $user = User::create($information);
