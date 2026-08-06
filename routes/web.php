@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InstructorController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -40,4 +41,6 @@ Route::prefix('admin')->middleware(['auth'])->group(function (){
 Route::prefix('instructor')->middleware(['auth', 'role-redirect'])->group(function (){
     Route::get('my-courses', [DashboardController::class, 'instructorCourses'])->name('instructor.courses');
     Route::get('dashboard', [DashboardController::class, 'instructorDashboard'])->name('instructor.dashboard')->middleware('role-redirect');
+    Route::get('courses/{course}/manage', [InstructorController::class, 'showCourseManagementPage'])->name('instructor.courses.manage')->can('manage', 'course');
+    Route::get('courses/{course}/my-students', [InstructorController::class, 'manageStudents'])->name('instructor.courses.students')->can('manage', 'course');
 });

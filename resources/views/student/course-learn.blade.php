@@ -206,6 +206,7 @@
                                                         </div>
                                                     </div>
                                                 </label>
+                                                {{-- fix up multiple file upload --}}
                                                 <input type="file" id="assignment" name="assignment[]" class="hidden" multiple>
                                                 <button type="submit" class="mt-3 inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-bold hover:cursor-pointer text-white transition hover:bg-primary/90">
                                                     Submit Assignment
