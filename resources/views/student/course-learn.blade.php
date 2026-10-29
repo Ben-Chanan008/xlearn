@@ -17,22 +17,22 @@
                         img.id = 'preview';
                         img.className = 'mx-auto max-h-48 object-contain';
                         // preview.outerHTML = `<img src="${event.target.result}" alt="Assignment Preview" id="preview" class="mx-auto max-h-48 object-contain">`;
-                        preview.appendChild(img) 
+                        preview.appendChild(img)
                     }
                     else{
-                        const i = document.createElement('i');  
+                        const i = document.createElement('i');
                         i.className = 'fas fa-2x fa-file-lines text-golden';
                         preview.appendChild(i);
                     }
-                    
+
                     const fileName = document.createElement('span');
                     fileName.className = 'block mt-2 text-xs opacity-75';
-                    fileName.textContent = file.name;  
+                    fileName.textContent = file.name;
                     preview.appendChild(fileName);
                      console.log(fileURL);
 
                 });
-                
+
 
             });
 
@@ -54,7 +54,7 @@
                 //         '_token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 //         'section_content_id': ,
                 //     })
-                // });  
+                // });
             };
 
             markAsDone();
@@ -66,6 +66,7 @@
             function activateSection(sectionId) {
                 const sectionHeader = document.getElementById('section-header');
                 sectionHeader.textContent = document.querySelector(`.js-section-toggle[data-section="${sectionId}"] p`).textContent;
+
 
                 sectionButtons.forEach(button => {
                     const isActive = button.dataset.section === sectionId;
@@ -176,14 +177,14 @@
                                                 <button class="mt-1 mark-as-done bg-gray-500 rounded-2xl py-2 px-4 text-sm font-semibold hover:bg-primary hover:cursor-pointer hover:text-white shadow-lg
                                                 text-gray-300"><i class="fas fa-check text-tea-green"></i> Mark As Done</button>
                                             </div>
-                                        </div> 
+                                        </div>
                                     </div>
 
                                     <p class="mt-4 text-sm leading-7 text-gray-600">{{ $content->content_information }} Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ipsam sequi laboriosam architecto molestiae aliquam ullam repellendus cumque, necessitatibus quis cum nulla dolorum nostrum dolor dicta laborum vel consequatur est modi beatae quos possimus esse suscipit a. Quasi, animi. Eos optio ullam dolor. Aut, accusamus itaque adipisci quia quibusdam natus odio perspiciatis dolorum aperiam at facere nisi, ipsum expedita velit autem, possimus vel. Mollitia, nobis iusto quis quae quam obcaecati minima quaerat beatae accusantium consequuntur enim. Reiciendis impedit dolores quae corporis animi commodi alias. Incidunt, eveniet? Voluptatibus, impedit eum iure eaque magni magnam, dolorem tempora quaerat quibusdam architecto recusandae. Veritatis quae cumque obcaecati, voluptas magni optio harum cum explicabo eos, vitae sed sequi, animi ipsum ab ut illum quis esse placeat repellendus? Nobis dignissimos, vel voluptates enim tempora quasi! Debitis quo exercitationem explicabo soluta rerum a minus. Est id veritatis quia sed exercitationem a necessitatibus eius obcaecati, pariatur aliquid officiis maxime qui dolorem harum nulla iure. Minus maiores at amet, odio doloribus eius rem quia expedita eaque asperiores laboriosam quae modi! Ratione blanditiis perspiciatis aliquid sapiente eaque dolor itaque. Fuga at quae eligendi perspiciatis beatae pariatur, perferendis modi consequuntur cumque asperiores neque ipsum possimus, porro blanditiis soluta magnam deleniti ea, veritatis maiores quo assumenda! Ducimus dicta ut mollitia quia hic blanditiis repellat quasi aut voluptatibus eum architecto sapiente quibusdam non voluptatum a eaque, dolor magnam sit quod voluptates perspiciatis ad, maiores est corporis? In magni accusamus exercitationem molestias sunt doloribus neque. Dolore alias ab natus rerum asperiores vel explicabo. Veniam perferendis a, ab ipsam dolor pariatur dolores quia possimus expedita temporibus dolorum saepe iure quibusdam quo fugiat ex. Neque esse in optio autem. Consectetur in laboriosam, nulla nam placeat quod mollitia obcaecati quaerat commodi perferendis enim culpa, eligendi incidunt autem distinctio id adipisci ex tempora ipsum sequi quidem animi. Eligendi eaque, aliquam ipsum inventore cumque praesentium nobis quae illum natus!</p>
 
                                     @if($content->files)
                                         <div class="mt-4 bg-gray-50 p-4 text-gray-700">
-                                            <p class="font-bold uppercase my-3 text-sm">Attached Files</p>  
+                                            <p class="font-bold uppercase my-3 text-sm">Attached Files</p>
                                             <div class="bg-tea-green w-1/4 p-4 rounded-lg text-left flex gap-x-2 items-center">
                                                 <i class="fas fa-2x fa-file-lines text-golden"></i>
                                                 {{-- <p class="mt-2 break-all">{{ $content->files }}</p> --}}

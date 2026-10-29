@@ -4,7 +4,11 @@
 
         <div class="flex space-x-8 w-full items-center justify-center">
             <ul class="flex font-semibold justify-center space-x-5">
+            @if(auth()->check())
                 <li><a href="{{ route('home') }}" class="text-xl">Home</a></li>
+            @else
+                <li><a href="{{ route('dashboard') }}" class="text-xl">Dashboard</a></li>
+            @endif
                 <li><a href="{{ route('home') }}" class="text-xl">About</a></li>
                 <li><a href="{{ route('home') }}" class="text-xl">Learn</a></li>
             </ul>

@@ -8,12 +8,65 @@
             const studentCards = [...document.querySelectorAll(`[data-student-card]`)];
             const formSelect = document.querySelector('#select-student select');
             const messageStudentInput = document.querySelector('#message-student');
+            const messageForm = messageStudentInput.closest('form');
+
+            messageForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(messageForm);
+                const messageInput = messageForm.querySelector('textarea[name="message"]');
+                const msg = new Msg('.msg-alert');
+
+                fetch("{{ route('send-message') }}", {
+                    method:'POST',
+                    body: JSON.stringify({
+                        receiver_id: parseInt(activeStudentId),
+                        course_id: parseInt(formData.get('course_id')),
+                        sender_id: parseInt("{{ auth()->user()->id }}"),
+                        content: formData.get('message'),
+                    }),
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Content-Type': 'application/json',
+                        // Without this, Laravel answers validation errors with an HTML redirect instead of JSON
+                        'Accept': 'application/json',
+                    },
+                }).then(async res => {
+                    const response = await res.json();
+
+                    if (!res.ok) {
+                        msg.popup({
+                            type: 'error',
+                            msg: response.message || 'An error occurred',
+                            duration: 3000,
+                        });
+                        return;
+                    }
+
+                    // Only clear the message once the server has saved it
+                    messageInput.value = '';
+
+                    msg.popup({
+                        type: 'success',
+                        msg: response.message,
+                        duration: 4000,
+                    });
+                }).catch(() => {
+                    msg.popup({
+                        type: 'error',
+                        msg: 'Something went wrong. Please try again.',
+                        duration: 3000,
+                    });
+                });
+
+            })
+
+            // console.log(messageForm);
             
             formSelect.addEventListener('change', (e) => {
                 activeStudentId = e.target.value;
                 toggleCardVisibility(activeStudentId);
                 
-                console.log(activeStudentId);   
+                // console.log(activeStudentId);   
             });
 
             const toggleCardVisibility = (activeStudentId) => {
@@ -35,6 +88,7 @@
 @endpush
 
 <x-layout :footer="false">
+    <div class="msg-alert"></div>
     <div class="py-8 px-4 sm:px-6 lg:px-8">
         <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -178,11 +232,12 @@
                         </div>
                     </div>
 
-                    <form class="space-y-3">
-                        <input readonly type="text" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20" id="message-student"
+                    <form class="space-y-3" method="POST" action="#">
+                        <input type="hidden" name="course_id" value="{{ $course->id }}" />
+                        <input readonly type="text" name="receiver" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20" id="message-student"
                          />
-                        <textarea rows="4" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Write a message about feedback, encouragement, or a reminder..."></textarea>
-                        <button type="button" class="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white hover:opacity-90">
+                        <textarea name="message" rows="4" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Write a message about feedback, encouragement, or a reminder..."></textarea>
+                        <button type="submit" class="w-full hover:cursor-pointer rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white hover:opacity-90">
                             Send message
                         </button>
                     </form>
