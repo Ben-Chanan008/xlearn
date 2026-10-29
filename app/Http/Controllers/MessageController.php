@@ -16,6 +16,7 @@ class MessageController extends Controller
         $messages = Message::with('sender')
             ->where('receiver_id', Auth::id())
             ->where('course_id', $course->id)
+            ->where('status', 'active')
             ->latest()
             ->limit(5)
             ->get();

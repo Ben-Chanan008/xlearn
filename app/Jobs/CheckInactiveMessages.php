@@ -26,11 +26,12 @@ class CheckInactiveMessages
     {
         // Fetch messages that are active
         try{
-            $activemessages = Message::where(['status' => 'active'])
+            // update() returns the number of rows it changed
+            $updatedCount = Message::where(['status' => 'active'])
                 ->where('created_at', '<', now()->subWeeks(3))
                 ->update(['status' => 'inactive']);
 
-            Log::info("Inactive messages updated successfully on: " . now() . ". Total messages updated: " . Message::where('updated_at', '<', now()->subWeeks(3))->count());
+            Log::info("Inactive messages updated successfully on: " . now() . ". Total messages updated: " . $updatedCount);
         } catch (\Exception $e) {
             Log::error('Failed to update inactive messages on ' . now() . ': ' . $e->getMessage());
         }
