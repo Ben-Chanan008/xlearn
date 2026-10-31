@@ -46,4 +46,5 @@ Route::prefix('instructor')->middleware(['auth', 'role-redirect'])->group(functi
     Route::get('dashboard', [DashboardController::class, 'instructorDashboard'])->name('instructor.dashboard')->middleware('role-redirect');
     Route::get('courses/{course}/manage', [InstructorController::class, 'showCourseManagementPage'])->name('instructor.courses.manage')->can('manage', 'course');
     Route::get('courses/{course}/my-students', [InstructorController::class, 'manageStudents'])->name('instructor.courses.students')->can('manage', 'course');
+    Route::get('courses/{course}/students/{student}/messages', [MessageController::class, 'conversation'])->name('instructor.courses.conversation')->can('manage', 'course');
 });

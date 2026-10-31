@@ -10,46 +10,41 @@
             const messageStudentInput = document.querySelector('#message-student');
             const messageForm = messageStudentInput.closest('form');
 
+            const courseIdInput = messageForm.querySelector('input[name="course_id"]');
+
+            // Sends a message to a student in this course and resolves to { ok, message }.
+            // Used by both the quick message form and the conversation dialog.
+            const postMessage = (receiverId, content) => fetch("{{ route('send-message') }}", {
+                method:'POST',
+                body: JSON.stringify({
+                    receiver_id: parseInt(receiverId),
+                    course_id: parseInt(courseIdInput.value),
+                    sender_id: parseInt("{{ auth()->user()->id }}"),
+                    content: content,
+                }),
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Content-Type': 'application/json',
+                    // Without this, Laravel answers validation errors with an HTML redirect instead of JSON
+                    'Accept': 'application/json',
+                },
+            }).then(async res => ({ ok: res.ok, message: (await res.json()).message }));
+
             messageForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                const formData = new FormData(messageForm);
                 const messageInput = messageForm.querySelector('textarea[name="message"]');
                 const msg = new Msg('.msg-alert');
 
-                fetch("{{ route('send-message') }}", {
-                    method:'POST',
-                    body: JSON.stringify({
-                        receiver_id: parseInt(activeStudentId),
-                        course_id: parseInt(formData.get('course_id')),
-                        sender_id: parseInt("{{ auth()->user()->id }}"),
-                        content: formData.get('message'),
-                    }),
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json',
-                        // Without this, Laravel answers validation errors with an HTML redirect instead of JSON
-                        'Accept': 'application/json',
-                    },
-                }).then(async res => {
-                    const response = await res.json();
-
-                    if (!res.ok) {
-                        msg.popup({
-                            type: 'error',
-                            msg: response.message || 'An error occurred',
-                            duration: 3000,
-                        });
-                        return;
-                    }
+                postMessage(activeStudentId, messageInput.value).then(({ ok, message }) => {
+                    msg.popup({
+                        type: ok ? 'success' : 'error',
+                        msg: message || 'An error occurred',
+                        duration: ok ? 4000 : 3000,
+                    });
 
                     // Only clear the message once the server has saved it
-                    messageInput.value = '';
-
-                    msg.popup({
-                        type: 'success',
-                        msg: response.message,
-                        duration: 4000,
-                    });
+                    if (ok)
+                        messageInput.value = '';
                 }).catch(() => {
                     msg.popup({
                         type: 'error',
@@ -57,8 +52,112 @@
                         duration: 3000,
                     });
                 });
-
             })
+
+            // Conversation dialog
+            const dialog = document.querySelector('#conversation-dialog');
+            const dialogMessages = dialog.querySelector('[data-dialog-messages]');
+            const dialogForm = dialog.querySelector('[data-dialog-form]');
+            const dialogInput = dialogForm.querySelector('textarea');
+            const dialogError = dialogForm.querySelector('[data-dialog-error]');
+            const conversationUrl = "{{ route('instructor.courses.conversation', [$course, '__student__']) }}";
+            let dialogStudentId = null;
+
+            const showDialogError = (text) => {
+                dialogError.textContent = text;
+                dialogError.classList.toggle('hidden', !text);
+            };
+
+            const showDialogNotice = (text) => {
+                const notice = document.createElement('p');
+                notice.dataset.dialogNotice = '';
+                notice.className = 'py-10 text-center text-sm text-gray-400';
+                notice.textContent = text;
+                dialogMessages.replaceChildren(notice);
+            };
+
+            const addBubble = ({ content, from_instructor, sent_at }) => {
+                dialogMessages.querySelector('[data-dialog-notice]')?.remove();
+
+                const bubble = document.createElement('div');
+                bubble.dataset.bubble = from_instructor ? 'instructor' : 'student';
+                bubble.className = `w-fit max-w-[80%] rounded-2xl px-4 py-2 text-sm ${from_instructor ? 'ml-auto bg-primary text-white' : 'bg-white text-gray-700 ring-1 ring-gray-100'}`;
+
+                // textContent, never innerHTML: the message is shown exactly as typed and can't inject HTML
+                const text = document.createElement('p');
+                text.className = 'whitespace-pre-line';
+                text.textContent = content;
+
+                const time = document.createElement('p');
+                time.className = `mt-1 text-[11px] ${from_instructor ? 'text-white/60' : 'text-gray-400'}`;
+                time.textContent = sent_at;
+
+                bubble.append(text, time);
+                dialogMessages.append(bubble);
+                dialogMessages.scrollTop = dialogMessages.scrollHeight;
+            };
+
+            const openConversation = (button) => {
+                dialogStudentId = button.dataset.messageStudent;
+                dialog.querySelector('[data-dialog-name]').textContent = document.querySelector(`#student-${dialogStudentId} h3`).textContent;
+                dialog.querySelector('[data-dialog-initials]').textContent = '';
+                dialogInput.value = '';
+                showDialogError('');
+                showDialogNotice('Loading conversation...');
+                dialog.showModal();
+
+                fetch(conversationUrl.replace('__student__', dialogStudentId), { headers: { 'Accept': 'application/json' } })
+                    .then(async res => {
+                        if (!res.ok)
+                            throw new Error(res.status);
+
+                        const { student, messages } = await res.json();
+                        dialog.querySelector('[data-dialog-name]').textContent = student.name;
+                        dialog.querySelector('[data-dialog-initials]').textContent = student.initials;
+
+                        if (!messages.length)
+                            showDialogNotice('No messages yet. Start the conversation below.');
+                        else {
+                            dialogMessages.replaceChildren();
+                            messages.forEach(addBubble);
+                        }
+
+                        // The server marked this student's replies as read, so the red dot can go
+                        button.querySelector('[data-unread-dot]')?.remove();
+                    })
+                    .catch(() => showDialogNotice('Could not load the conversation. Please try again.'));
+            };
+
+            document.querySelectorAll('[data-message-student]').forEach(button =>
+                button.addEventListener('click', () => openConversation(button)));
+
+            dialog.querySelector('[data-dialog-close]').addEventListener('click', () => dialog.close());
+
+            // Clicking the dark backdrop around the dialog closes it
+            dialog.addEventListener('click', (e) => {
+                if (e.target === dialog)
+                    dialog.close();
+            });
+
+            dialogForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const content = dialogInput.value;
+                const sendButton = dialogForm.querySelector('button[type="submit"]');
+
+                sendButton.disabled = true;
+                showDialogError('');
+
+                postMessage(dialogStudentId, content)
+                    .then(({ ok, message }) => {
+                        if (!ok)
+                            return showDialogError(message || 'An error occurred');
+
+                        addBubble({ content, from_instructor: true, sent_at: 'just now' });
+                        dialogInput.value = '';
+                    })
+                    .catch(() => showDialogError('Something went wrong. Please try again.'))
+                    .finally(() => sendButton.disabled = false);
+            });
 
             // console.log(messageForm);
             
@@ -195,9 +294,13 @@
                                 </div>
 
                                 <div class="mt-5 flex flex-wrap gap-3">
-                                    <button class="inline-flex items-center rounded-2xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                                    @php($unread = $unreadCounts[$student->id] ?? 0)
+                                    <button type="button" data-message-student="{{ $student->id }}" class="relative inline-flex items-center rounded-2xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:cursor-pointer">
                                         <i class="fas fa-comment-dots mr-2"></i>
                                         Message
+                                        @if($unread)
+                                            <span data-unread-dot title="{{ $unread }} unread {{ Str::plural('reply', $unread) }}" class="absolute -top-2 -right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">{{ $unread }}</span>
+                                        @endif
                                     </button>
                                     <button class="inline-flex items-center rounded-2xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                                         <i class="fas fa-file-alt mr-2"></i>
@@ -301,4 +404,30 @@
             </div>
         </div>
     </div>
+
+    {{-- Conversation dialog, opened by a student card's Message button --}}
+    <dialog id="conversation-dialog" class="m-auto w-full max-w-lg rounded-3xl p-0 shadow-xl backdrop:bg-black/40">
+        <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+            <div class="flex items-center gap-3">
+                <div data-dialog-initials class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-extrabold text-white"></div>
+                <div>
+                    <h3 data-dialog-name class="font-extrabold text-gray-900"></h3>
+                    <p class="text-xs text-gray-500">{{ $course->name }}</p>
+                </div>
+            </div>
+            <button type="button" data-dialog-close aria-label="Close conversation" class="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:cursor-pointer">
+                <i class="fas fa-xmark"></i>
+            </button>
+        </div>
+
+        <div data-dialog-messages class="h-96 space-y-3 overflow-y-auto bg-gray-50 px-5 py-4"></div>
+
+        <form data-dialog-form class="space-y-2 border-t border-gray-100 px-5 py-4">
+            <textarea rows="2" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Write a reply..."></textarea>
+            <p data-dialog-error class="hidden text-sm font-semibold text-red-600"></p>
+            <button type="submit" class="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white hover:opacity-90 hover:cursor-pointer disabled:opacity-50">
+                <i class="fas fa-paper-plane mr-2"></i>Send
+            </button>
+        </form>
+    </dialog>
 </x-layout>

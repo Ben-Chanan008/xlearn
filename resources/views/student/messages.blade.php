@@ -1,4 +1,47 @@
+@push('scripts')
+	<script>
+		// Sends a reply to the instructor and resolves to true if the server saved it
+		function sendReply(receiverId, content) {
+			const msg = new Msg('.msg-alert');
+
+			return fetch("{{ route('send-message') }}", {
+				method: 'POST',
+				body: JSON.stringify({
+					receiver_id: receiverId,
+					course_id: {{ $course->id }},
+					sender_id: parseInt("{{ auth()->user()->id }}"),
+					content: content,
+				}),
+				headers: {
+					'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+					'Content-Type': 'application/json',
+					'Accept': 'application/json',
+				},
+			}).then(async res => {
+				const response = await res.json();
+
+				msg.popup({
+					type: res.ok ? 'success' : 'error',
+					msg: response.message || 'An error occurred',
+					duration: res.ok ? 4000 : 3000,
+				});
+
+				return res.ok;
+			}).catch(() => {
+				msg.popup({
+					type: 'error',
+					msg: 'Something went wrong. Please try again.',
+					duration: 3000,
+				});
+
+				return false;
+			});
+		}
+	</script>
+@endpush
+
 <x-layout :footer="false">
+	<div class="msg-alert"></div>
 	<x-student-course-tab :course="$course" />
 
 	<div class="mb-12 px-4 sm:px-6 lg:px-8" x-data="{ query: '', filter: 'all' }">
@@ -36,7 +79,7 @@
 					@forelse($messages as $message)
 						@php($isRecent = $message->created_at->gte(now()->subDays(7)))
 						<article
-							x-data="{ content: @js(Str::lower($message->content)), sender: @js(Str::lower($message->sender->fullName())), isRecent: @js($isRecent) }"
+							x-data="{ content: @js(Str::lower($message->content)), sender: @js(Str::lower($message->sender->fullName())), isRecent: @js($isRecent), replying: false, reply: '', sending: false }"
 							x-show="(content.includes(query.toLowerCase()) || sender.includes(query.toLowerCase())) && (filter === 'all' || isRecent)"
 							x-transition
 							class="rounded-2xl border border-gray-100 bg-gray-50/70 p-5 transition hover:border-primary/20 hover:bg-white hover:shadow-sm"
@@ -57,9 +100,26 @@
 									<p class="mt-4 whitespace-pre-line text-sm leading-7 text-gray-600">{{ $message->content }}</p>
 								</div>
 							</div>
-							<button class="flex px-5 py-2 mt-6 items-center justify-center bg-gray-300 shadow-md text-gray-700 rounded-full hover:bg-gray-200">
+							<button type="button" @click="replying = !replying" class="flex px-5 py-2 mt-6 items-center justify-center bg-gray-300 shadow-md text-gray-700 rounded-full hover:bg-gray-200 hover:cursor-pointer">
 											<i class="fas fa-comment"></i> Reply 	
 										</button>
+
+							<form
+								x-show="replying"
+								x-transition
+								@submit.prevent="sending = true; sendReply({{ $message->sender_id }}, reply).then(sent => { sending = false; if (sent) { reply = ''; replying = false; } })"
+								class="mt-4 space-y-3"
+							>
+								<textarea x-model="reply" rows="3" class="w-full rounded-2xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Write your reply to {{ $message->sender->fullName() }}..."></textarea>
+								<div class="flex gap-2">
+									<button type="submit" :disabled="sending" class="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white hover:opacity-90 hover:cursor-pointer disabled:opacity-50">
+										<i class="fas fa-paper-plane mr-1"></i> Send reply
+									</button>
+									<button type="button" @click="replying = false" class="rounded-full px-5 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 hover:cursor-pointer">
+										Cancel
+									</button>
+								</div>
+							</form>
 						</article>
 					@empty
 						<div class="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-6 py-14 text-center">

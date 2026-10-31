@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\Message;
 use App\Models\User;
+use Auth;
 use Illuminate\Http\Request;
 
 class InstructorController extends Controller
@@ -20,6 +22,15 @@ class InstructorController extends Controller
         // dd($request->all());
         $students = $course->students()->withPivot(['course_progress', 'completed_at', 'accessed_at'])->get();
 
-        return view('instructor.manage-students', compact('course', 'students'));
+        // Unread replies to the instructor in this course, keyed by student id: [41 => 2, ...]
+        $unreadCounts = Message::where('course_id', $course->id)
+            ->where('receiver_id', Auth::id())
+            ->where('status', 'active')
+            ->where('is_read', false)
+            ->selectRaw('sender_id, count(*) as total')
+            ->groupBy('sender_id')
+            ->pluck('total', 'sender_id');
+
+        return view('instructor.manage-students', compact('course', 'students', 'unreadCounts'));
     }
 }
