@@ -1,6 +1,82 @@
 @props(['course'])
 
+@push('scripts')
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const sectionList = document.querySelector('[data-section-list]');
+            const sectionForm = document.querySelector('[data-section-form]');
+            const sectionInput = sectionForm.querySelector('input[name="section_name"]');
+            const sectionError = sectionForm.querySelector('[data-section-error]');
+            const addButton = sectionForm.querySelector('button[type="submit"]');
+            const msg = new Msg('.msg-alert');
+
+            const showSectionError = (text) => {
+                sectionError.textContent = text;
+                sectionError.classList.toggle('hidden', !text);
+            };
+
+            // Builds the same row as the Blade loop below; textContent so the name is never read as HTML
+            const addSectionRow = (section) => {
+                const row = document.createElement('li');
+                row.className = 'flex items-center gap-4 rounded-2xl border border-gray-100 bg-gray-50 px-5 py-3';
+
+                const number = document.createElement('span');
+                number.className = 'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white';
+                number.textContent = sectionList.children.length + 1;
+
+                const name = document.createElement('span');
+                name.className = 'font-semibold text-gray-800';
+                name.textContent = section.section_name;
+
+                row.append(number, name);
+                sectionList.append(row);
+                sectionList.classList.remove('hidden');
+            };
+
+            sectionForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                addButton.disabled = true;
+                showSectionError('');
+
+                fetch("{{ route('instructor.courses.sections.store', $course) }}", {
+                    method: 'POST',
+                    body: JSON.stringify({ section_name: sectionInput.value }),
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Content-Type': 'application/json',
+                        // Without this, Laravel answers validation errors with an HTML redirect instead of JSON
+                        'Accept': 'application/json',
+                    },
+                }).then(async res => ({ ok: res.ok, status: res.status, data: await res.json() }))
+                .then(({ ok, status, data }) => {
+                    // Validation errors go under the input, everything else is a popup
+                    if (status === 422)
+                        return showSectionError(data.errors?.section_name?.[0] ?? data.message);
+
+                    msg.popup({
+                        type: ok ? 'success' : 'error',
+                        msg: data.message || 'An error occurred',
+                        duration: ok ? 4000 : 3000,
+                    });
+
+                    if (ok) {
+                        addSectionRow(data.section);
+                        sectionInput.value = '';
+                    }
+                }).catch(() => {
+                    msg.popup({
+                        type: 'error',
+                        msg: 'Something went wrong. Please try again.',
+                        duration: 3000,
+                    });
+                }).finally(() => addButton.disabled = false);
+            });
+        });
+    </script>
+@endpush
+
 <x-layout :footer="false">
+    <div class="msg-alert"></div>
     <x-header><i class="fas mr-1 fa-people-group"></i>My Students</x-header>
 
     <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
@@ -86,6 +162,30 @@
             </div>
         </div>
 
+        {{-- Course Sections --}}
+        <div class="border-t border-gray-100 p-8">
+            <h3 class="mb-4 text-lg font-extrabold text-gray-800"><i class="fas fa-layer-group mr-2 text-primary"></i>Course Sections</h3>
+
+            <ol data-section-list class="mb-4 space-y-2 @if($course->courseSections->isEmpty()) hidden @endif">
+                @foreach($course->courseSections as $section)
+                    <li class="flex items-center gap-4 rounded-2xl border border-gray-100 bg-gray-50 px-5 py-3">
+                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">{{ $loop->iteration }}</span>
+                        <span class="font-semibold text-gray-800">{{ $section->section_name }}</span>
+                    </li>
+                @endforeach
+            </ol>
+
+            <form data-section-form class="flex flex-col gap-2 sm:flex-row sm:items-start">
+                <div class="grow">
+                    <input type="text" name="section_name" maxlength="255" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="New section name, e.g. Introduction to Semiconductors" />
+                    <p data-section-error class="hidden mt-1 text-sm font-semibold text-red-600"></p>
+                </div>
+                <button type="submit" class="rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:opacity-90 hover:cursor-pointer disabled:opacity-50">
+                    <i class="fas fa-plus mr-2"></i>Add section
+                </button>
+            </form>
+        </div>
+
         {{-- Students Table --}}
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
@@ -117,10 +217,10 @@
                             {{-- Progress Bar --}}
                             <td class="px-8 py-6 w-1/3">
                                 <div class="flex items-center space-x-3">
-                                    <div class="flex-grow h-2 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="grow h-2 bg-gray-100 rounded-full overflow-hidden">
                                         <div class="h-full bg-primary transition-all duration-500" style="width: {{ $student->pivot->course_progress }}%"></div>
                                     </div>
-                                    <span class="text-sm font-bold text-gray-700 min-w-[3rem] text-right">
+                                    <span class="text-sm font-bold text-gray-700 min-w-12 text-right">
                                         {{ $student->pivot->course_progress }}%
                                     </span>
                                 </div>

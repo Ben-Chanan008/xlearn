@@ -12,6 +12,12 @@ class CourseSection extends Model
 {
     use HasFactory, SoftDeletes;
 
+    // protected $fillable = [
+    //     'course_id',
+    //     'section_name',
+    //     'position',
+    // ];
+
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
