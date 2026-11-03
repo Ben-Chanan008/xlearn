@@ -6,7 +6,7 @@
             const sectionList = document.querySelector('[data-section-list]');
             const msg = new Msg('.msg-alert');
 
-            const sectionUrl = (id) => "{{ route('instructor.courses.sections.update', [$course, '__section__']) }}".replace('__section__', id);
+            const renameUrl = (id) => "{{ route('instructor.courses.sections.rename', [$course, '__section__']) }}".replace('__section__', id);
 
             // Swaps the row's name for an input; Enter saves, Esc or Cancel puts the name back
             const startRename = (row) => {
@@ -66,7 +66,7 @@
                     saveButton.disabled = true;
                     showError('');
 
-                    fetch(sectionUrl(row.dataset.sectionId), {
+                    fetch(renameUrl(row.dataset.sectionId), {
                         method: 'PATCH',
                         body: JSON.stringify({ section_name: input.value }),
                         headers: {
@@ -210,6 +210,7 @@
                         <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">{{ $loop->iteration }}</span>
                         <span data-section-name class="grow font-semibold text-gray-800">{{ $section->section_name }}</span>
                         <button type="button" data-edit-section title="Rename section" class="text-gray-400 hover:text-primary hover:cursor-pointer"><i class="fas fa-pen"></i></button>
+                        <a href="{{ route('instructor.courses.sections.edit', [$course, $section]) }}" title="Edit section content" class="text-gray-400 hover:text-primary"><i class="fas fa-pen-to-square"></i></a>
                     </li>
                 @endforeach
             </ol>

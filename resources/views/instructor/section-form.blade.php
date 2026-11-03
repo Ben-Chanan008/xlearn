@@ -1,4 +1,4 @@
-@props(['course'])
+@props(['course', 'section', 'items'])
 
 @push('styles')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" />
@@ -21,53 +21,81 @@
             const progressBar = progress.querySelector('[data-progress-bar]');
             const submitButton = builder.querySelector('button[type="submit"]');
             const msg = new Msg('.msg-alert');
+            // The section's saved items when editing, empty when creating
+            const existingItems = {{ Js::from($items) }};
 
-            // Per content item: its Quill editor and the files picked so far
+            // Per content item: its saved id (none for new items), Quill editor, files already uploaded and files picked so far
             const itemState = new Map();
             let itemCount = 0;
 
-            const fileIcon = (file) => {
-                if (file.type.startsWith('video/')) return 'fa-file-video';
-                if (file.type.startsWith('audio/')) return 'fa-file-audio';
-                if (file.type.startsWith('image/')) return 'fa-file-image';
-                if (file.type === 'application/pdf') return 'fa-file-pdf';
-                if (/\.(ppt|pptx|odp|key)$/i.test(file.name)) return 'fa-file-powerpoint';
+            const fileIcon = (type, name) => {
+                if (type?.startsWith('video/')) return 'fa-file-video';
+                if (type?.startsWith('audio/')) return 'fa-file-audio';
+                if (type?.startsWith('image/')) return 'fa-file-image';
+                if (type === 'application/pdf') return 'fa-file-pdf';
+                if (/\.(ppt|pptx|odp|key)$/i.test(name)) return 'fa-file-powerpoint';
                 return 'fa-file-lines';
             };
 
             const formatSize = (bytes) => bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.ceil(bytes / 1024)} KB`;
 
+            // The date picker wants local "YYYY-MM-DDTHH:mm"; due dates are saved as UTC
+            const toLocalInput = (iso) => {
+                const date = new Date(iso);
+                date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+                return date.toISOString().slice(0, 16);
+            };
+
             // textContent throughout so file names are never read as HTML
+            const fileRow = ({ type, name, detail, onRemove }) => {
+                const row = document.createElement('li');
+                row.className = 'flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-2 text-sm';
+
+                const icon = document.createElement('i');
+                icon.className = `fas ${fileIcon(type, name)} text-golden`;
+
+                const label = document.createElement('span');
+                label.className = 'grow truncate font-semibold text-gray-700';
+                label.textContent = name;
+
+                const info = document.createElement('span');
+                info.className = 'text-xs text-gray-400';
+                info.textContent = detail;
+
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.title = 'Remove file';
+                remove.className = 'text-gray-400 hover:text-red-600 hover:cursor-pointer';
+                remove.innerHTML = '<i class="fas fa-xmark"></i>';
+                remove.addEventListener('click', onRemove);
+
+                row.append(icon, label, info, remove);
+                return row;
+            };
+
             const renderFiles = (item) => {
-                const list = item.querySelector('[data-file-list]');
-                list.replaceChildren(...itemState.get(item).files.map((file, index) => {
-                    const row = document.createElement('li');
-                    row.className = 'flex items-center gap-3 rounded-xl bg-gray-50 px-4 py-2 text-sm';
+                const state = itemState.get(item);
 
-                    const icon = document.createElement('i');
-                    icon.className = `fas ${fileIcon(file)} text-golden`;
-
-                    const name = document.createElement('span');
-                    name.className = 'grow truncate font-semibold text-gray-700';
-                    name.textContent = file.name;
-
-                    const size = document.createElement('span');
-                    size.className = 'text-xs text-gray-400';
-                    size.textContent = formatSize(file.size);
-
-                    const remove = document.createElement('button');
-                    remove.type = 'button';
-                    remove.title = 'Remove file';
-                    remove.className = 'text-gray-400 hover:text-red-600 hover:cursor-pointer';
-                    remove.innerHTML = '<i class="fas fa-xmark"></i>';
-                    remove.addEventListener('click', () => {
-                        itemState.get(item).files.splice(index, 1);
-                        renderFiles(item);
-                    });
-
-                    row.append(icon, name, size, remove);
-                    return row;
-                }));
+                item.querySelector('[data-file-list]').replaceChildren(
+                    ...state.keptFiles.map((file, index) => fileRow({
+                        type: file.mime,
+                        name: file.name,
+                        detail: 'Uploaded',
+                        onRemove: () => {
+                            state.keptFiles.splice(index, 1);
+                            renderFiles(item);
+                        },
+                    })),
+                    ...state.files.map((file, index) => fileRow({
+                        type: file.type,
+                        name: file.name,
+                        detail: formatSize(file.size),
+                        onRemove: () => {
+                            state.files.splice(index, 1);
+                            renderFiles(item);
+                        },
+                    })),
+                );
             };
 
             // Editor for written content, file picker for uploads, both for "both"
@@ -86,12 +114,16 @@
                 });
             };
 
-            const addContentItem = () => {
+            // data is one of existingItems when editing, null for a new blank item
+            const addContentItem = (data = null) => {
                 const item = contentTemplate.content.firstElementChild.cloneNode(true);
-                const id = ++itemCount;
+                const group = ++itemCount;
 
                 // Each item's radio group needs its own name, or picking one item's type unchecks the others
-                item.querySelectorAll('[data-mode]').forEach(radio => radio.name = `content_mode_${id}`);
+                item.querySelectorAll('[data-mode]').forEach(radio => radio.name = `content_mode_${group}`);
+
+                // On the page before Quill starts, since the editor measures and selects inside the live document
+                contentList.append(item);
 
                 const quill = new Quill(item.querySelector('[data-editor]'), {
                     theme: 'snow',
@@ -107,7 +139,18 @@
                         ],
                     },
                 });
-                itemState.set(item, { quill, files: [] });
+                itemState.set(item, { id: data?.id ?? null, quill, keptFiles: [...(data?.files ?? [])], files: [] });
+
+                if (data) {
+                    item.querySelector('[data-field="content_name"]').value = data.content_name;
+                    item.querySelector(`[data-mode][value="${data.content_mode}"]`).checked = true;
+                    // Sanitized when it was saved; convert() rather than dangerouslyPasteHTML(), which would focus each editor and scroll the page
+                    if (data.content_information) quill.setContents(quill.clipboard.convert({ html: data.content_information }));
+                    item.querySelector('[data-assignment]').checked = data.is_assignment;
+                    item.querySelector('[data-due-wrap]').classList.toggle('hidden', !data.is_assignment);
+                    if (data.due_at) item.querySelector('[data-due]').value = toLocalInput(data.due_at);
+                    renderFiles(item);
+                }
 
                 item.querySelectorAll('[data-mode]').forEach(radio => radio.addEventListener('change', () => applyMode(item)));
 
@@ -125,12 +168,14 @@
                 });
 
                 item.querySelector('[data-remove-item]').addEventListener('click', () => {
+                    // A saved item disappears for students on save; a new one was never seen
+                    if (itemState.get(item).id && !confirm('Students will no longer see this item. Remove it?')) return;
+
                     itemState.delete(item);
                     item.remove();
                     renumberItems();
                 });
 
-                contentList.append(item);
                 applyMode(item);
                 renumberItems();
             };
@@ -169,15 +214,20 @@
 
             const buildFormData = () => {
                 const data = new FormData();
+                // PHP only parses uploads on POST, so the edit's PUT rides along as _method
+                @if($section)
+                    data.append('_method', 'PUT');
+                @endif
                 data.append('section_name', sectionInput.value);
 
                 contentList.querySelectorAll('[data-content-item]').forEach((item, index) => {
-                    const { quill, files } = itemState.get(item);
+                    const { id, quill, keptFiles, files } = itemState.get(item);
                     const mode = item.querySelector('[data-mode]:checked').value;
                     const isAssignment = item.querySelector('[data-assignment]').checked;
                     const dueAt = item.querySelector('[data-due]').value;
                     const prefix = `contents[${index}]`;
 
+                    if (id) data.append(`${prefix}[id]`, id);
                     data.append(`${prefix}[content_name]`, item.querySelector('[data-field="content_name"]').value);
                     data.append(`${prefix}[content_mode]`, mode);
 
@@ -185,8 +235,10 @@
                     if (mode !== 'files')
                         data.append(`${prefix}[content_information]`, quill.getText().trim() ? quill.getSemanticHTML().replaceAll('&nbsp;', ' ') : '');
 
-                    if (mode !== 'text')
+                    if (mode !== 'text') {
+                        keptFiles.forEach(file => data.append(`${prefix}[keep_files][]`, file.path));
                         files.forEach(file => data.append(`${prefix}[files][]`, file));
+                    }
 
                     data.append(`${prefix}[is_assignment]`, isAssignment ? '1' : '0');
                     // The picker gives local time; the app stores UTC
@@ -207,7 +259,7 @@
                 progress.classList.remove('hidden');
 
                 // axios instead of fetch for the upload progress, which matters for lecture videos
-                window.axios.post("{{ route('instructor.courses.sections.store', $course) }}", buildFormData(), {
+                window.axios.post("{{ $section ? route('instructor.courses.sections.update', [$course, $section]) : route('instructor.courses.sections.store', $course) }}", buildFormData(), {
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                         'Accept': 'application/json',
@@ -233,14 +285,14 @@
                 });
             });
 
-            addContentItem();
+            (existingItems.length ? existingItems : [null]).forEach(data => addContentItem(data));
         });
     </script>
 @endpush
 
 <x-layout :footer="false">
     <div class="msg-alert"></div>
-    <x-header><i class="fas mr-1 fa-layer-group"></i>New Section</x-header>
+    <x-header><i class="fas mr-1 fa-layer-group"></i>{{ $section ? 'Edit Section' : 'New Section' }}</x-header>
 
     <a href="{{ route('instructor.courses.manage', $course) }}" class="mb-6 inline-flex items-center text-sm font-semibold text-primary hover:underline">
         <i class="fas fa-arrow-left mr-2"></i>Back to {{ $course->name }}
@@ -249,7 +301,7 @@
     <form data-section-builder class="mb-8 space-y-6">
         <div class="rounded-3xl border border-gray-100 bg-white p-8 shadow-xl">
             <label for="section_name" class="mb-2 block text-sm font-bold uppercase tracking-wider text-gray-500">Section name</label>
-            <input type="text" id="section_name" name="section_name" maxlength="255" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="e.g. Introduction to Semiconductors" />
+            <input type="text" id="section_name" name="section_name" value="{{ $section?->section_name }}" maxlength="255" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="e.g. Introduction to Semiconductors" />
             <p data-error="section_name" class="hidden mt-1 text-sm font-semibold text-red-600"></p>
         </div>
 
@@ -271,12 +323,12 @@
             </div>
             <a href="{{ route('instructor.courses.manage', $course) }}" class="rounded-2xl bg-gray-100 px-6 py-3 text-center text-sm font-semibold text-gray-600 hover:bg-gray-200">Cancel</a>
             <button type="submit" class="rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:opacity-90 hover:cursor-pointer disabled:opacity-50">
-                <i class="fas fa-check mr-2"></i>Create section
+                <i class="fas fa-check mr-2"></i>{{ $section ? 'Save changes' : 'Create section' }}
             </button>
         </div>
     </form>
 
-    {{-- One content item; cloned by addContentItem() --}}
+    {{-- One content item; cloned and, when editing, filled by addContentItem() --}}
     <template data-content-template>
         <article data-content-item class="space-y-6 rounded-3xl border border-gray-100 bg-white p-8 shadow-xl">
             <div class="flex items-center justify-between">

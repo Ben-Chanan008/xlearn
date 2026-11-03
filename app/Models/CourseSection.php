@@ -25,6 +25,7 @@ class CourseSection extends Model
 
     public function sectionContents(): HasMany
     {
-        return $this->hasMany(CourseSectionsContent::class);
+        // In the order the instructor built them
+        return $this->hasMany(CourseSectionsContent::class)->orderBy('id');
     }
 }
