@@ -14,6 +14,8 @@ class InstructorController extends Controller
     public function showCourseManagementPage(Request $request, Course $course)
     {
         $students = $course->students()->withPivot(['course_progress', 'completed_at', 'accessed_at'])->get();
+        // The count goes in the delete confirmation
+        $course->load(['courseSections' => fn ($query) => $query->withCount('sectionContents')]);
         return view('instructor.course-management', compact('course', 'students'));
     }
 

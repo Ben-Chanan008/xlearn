@@ -52,5 +52,6 @@ Route::prefix('instructor')->middleware(['auth', 'role-redirect'])->group(functi
     Route::post('courses/{course}/sections',[CourseSectionController::class, 'store'])->name('instructor.courses.sections.store')->can('manage', 'course');
     Route::get('courses/{course}/sections/{courseSection}/edit', [CourseSectionController::class, 'edit'])->name('instructor.courses.sections.edit')->can('manage', 'course')->scopeBindings();
     Route::put('courses/{course}/sections/{courseSection}', [CourseSectionController::class, 'update'])->name('instructor.courses.sections.update')->can('manage', 'course')->scopeBindings();
+    Route::delete('courses/{course}/sections/{courseSection}', [CourseSectionController::class, 'destroy'])->name('instructor.courses.sections.destroy')->can('manage', 'course')->scopeBindings();
     Route::patch('courses/{course}/sections/{courseSection}/name', [CourseSectionController::class, 'rename'])->name('instructor.courses.sections.rename')->can('manage', 'course')->scopeBindings();
 });

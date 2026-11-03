@@ -140,6 +140,25 @@ class CourseSectionController extends Controller
         }
     }
 
+    public function destroy(Course $course, CourseSection $courseSection)
+    {
+        try {
+            DB::transaction(function () use ($course, $courseSection) {
+                // Soft deleted: its content, files and student submissions stay, hidden with the section
+                $courseSection->delete();
+
+                // Close the gap so positions stay 1..n
+                CourseSection::where('course_id', $course->id)
+                    ->where('position', '>', $courseSection->position)
+                    ->decrement('position');
+            });
+
+            return response()->json(['message' => 'Section deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Something went wrong'], 500);
+        }
+    }
+
     /**
      * Stores the uploads on the public disk and returns them in the shape the files column holds
      */

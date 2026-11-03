@@ -105,9 +105,51 @@
                 input.select();
             };
 
+            const sectionUrl = (id) => "{{ route('instructor.courses.sections.destroy', [$course, '__section__']) }}".replace('__section__', id);
+
+            const deleteSection = (row, deleteButton) => {
+                const name = row.querySelector('[data-section-name]').textContent;
+                const count = Number(row.dataset.contentCount);
+                if (!confirm(`Delete "${name}"? Its ${count} content item${count === 1 ? '' : 's'} will be hidden from students.`)) return;
+
+                deleteButton.disabled = true;
+
+                fetch(sectionUrl(row.dataset.sectionId), {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json',
+                    },
+                }).then(async res => ({ ok: res.ok, data: await res.json() }))
+                .then(({ ok, data }) => {
+                    msg.popup({
+                        type: ok ? 'success' : 'error',
+                        msg: data.message || 'An error occurred',
+                        duration: ok ? 4000 : 3000,
+                    });
+
+                    if (!ok) return deleteButton.disabled = false;
+
+                    // The server closed the gap in positions; match it on screen
+                    row.remove();
+                    sectionList.querySelectorAll('[data-section-number]').forEach((number, index) => number.textContent = index + 1);
+                    sectionList.classList.toggle('hidden', !sectionList.children.length);
+                }).catch(() => {
+                    deleteButton.disabled = false;
+                    msg.popup({
+                        type: 'error',
+                        msg: 'Something went wrong. Please try again.',
+                        duration: 3000,
+                    });
+                });
+            };
+
             sectionList.addEventListener('click', (e) => {
                 const editButton = e.target.closest('[data-edit-section]');
                 if (editButton) startRename(editButton.closest('[data-section-row]'));
+
+                const deleteButton = e.target.closest('[data-delete-section]');
+                if (deleteButton) deleteSection(deleteButton.closest('[data-section-row]'), deleteButton);
             });
         });
     </script>
@@ -206,11 +248,12 @@
 
             <ol data-section-list class="mb-4 space-y-2 @if($course->courseSections->isEmpty()) hidden @endif">
                 @foreach($course->courseSections as $section)
-                    <li data-section-row data-section-id="{{ $section->id }}" class="flex items-center gap-4 rounded-2xl border border-gray-100 bg-gray-50 px-5 py-3">
-                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">{{ $loop->iteration }}</span>
+                    <li data-section-row data-section-id="{{ $section->id }}" data-content-count="{{ $section->section_contents_count }}" class="flex items-center gap-4 rounded-2xl border border-gray-100 bg-gray-50 px-5 py-3">
+                        <span data-section-number class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">{{ $loop->iteration }}</span>
                         <span data-section-name class="grow font-semibold text-gray-800">{{ $section->section_name }}</span>
                         <button type="button" data-edit-section title="Rename section" class="text-gray-400 hover:text-primary hover:cursor-pointer"><i class="fas fa-pen"></i></button>
                         <a href="{{ route('instructor.courses.sections.edit', [$course, $section]) }}" title="Edit section content" class="text-gray-400 hover:text-primary"><i class="fas fa-pen-to-square"></i></a>
+                        <button type="button" data-delete-section title="Delete section" class="text-gray-400 hover:text-red-600 hover:cursor-pointer disabled:opacity-50"><i class="fas fa-trash"></i></button>
                     </li>
                 @endforeach
             </ol>
