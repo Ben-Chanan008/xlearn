@@ -11,6 +11,15 @@ class CourseSectionsContent extends Model
 {
     use HasFactory;
 
+    protected function casts(): array
+    {
+        return [
+            // List of ['path' => ..., 'name' => ..., 'mime' => ...] on the public disk
+            'files' => 'array',
+            'due_at' => 'datetime',
+        ];
+    }
+
     public function students(): HasMany
     {
         return $this->hasMany(User::class, 'students_id');

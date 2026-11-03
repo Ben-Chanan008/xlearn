@@ -4,72 +4,110 @@
     <script>
         window.addEventListener('DOMContentLoaded', () => {
             const sectionList = document.querySelector('[data-section-list]');
-            const sectionForm = document.querySelector('[data-section-form]');
-            const sectionInput = sectionForm.querySelector('input[name="section_name"]');
-            const sectionError = sectionForm.querySelector('[data-section-error]');
-            const addButton = sectionForm.querySelector('button[type="submit"]');
             const msg = new Msg('.msg-alert');
 
-            const showSectionError = (text) => {
-                sectionError.textContent = text;
-                sectionError.classList.toggle('hidden', !text);
+            const sectionUrl = (id) => "{{ route('instructor.courses.sections.update', [$course, '__section__']) }}".replace('__section__', id);
+
+            // Swaps the row's name for an input; Enter saves, Esc or Cancel puts the name back
+            const startRename = (row) => {
+                if (row.querySelector('[data-rename-form]')) return;
+
+                const name = row.querySelector('[data-section-name]');
+                const editButton = row.querySelector('[data-edit-section]');
+
+                const form = document.createElement('form');
+                form.dataset.renameForm = '';
+                form.className = 'flex grow flex-col gap-2 sm:flex-row sm:items-start';
+
+                const field = document.createElement('div');
+                field.className = 'grow';
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = 'section_name';
+                input.maxLength = 255;
+                input.value = name.textContent;
+                input.className = 'w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20';
+
+                const error = document.createElement('p');
+                error.className = 'hidden mt-1 text-sm font-semibold text-red-600';
+                field.append(input, error);
+
+                const saveButton = document.createElement('button');
+                saveButton.type = 'submit';
+                saveButton.className = 'rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-90 hover:cursor-pointer disabled:opacity-50';
+                saveButton.textContent = 'Save';
+
+                const cancelButton = document.createElement('button');
+                cancelButton.type = 'button';
+                cancelButton.className = 'rounded-xl bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-200 hover:cursor-pointer';
+                cancelButton.textContent = 'Cancel';
+
+                form.append(field, saveButton, cancelButton);
+
+                const showError = (text) => {
+                    error.textContent = text;
+                    error.classList.toggle('hidden', !text);
+                };
+
+                const stopRename = () => {
+                    form.remove();
+                    name.classList.remove('hidden');
+                    editButton.classList.remove('hidden');
+                };
+
+                cancelButton.addEventListener('click', stopRename);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') stopRename();
+                });
+
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    saveButton.disabled = true;
+                    showError('');
+
+                    fetch(sectionUrl(row.dataset.sectionId), {
+                        method: 'PATCH',
+                        body: JSON.stringify({ section_name: input.value }),
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                    }).then(async res => ({ ok: res.ok, status: res.status, data: await res.json() }))
+                    .then(({ ok, status, data }) => {
+                        if (status === 422)
+                            return showError(data.errors?.section_name?.[0] ?? data.message);
+
+                        msg.popup({
+                            type: ok ? 'success' : 'error',
+                            msg: data.message || 'An error occurred',
+                            duration: ok ? 4000 : 3000,
+                        });
+
+                        if (ok) {
+                            name.textContent = data.section.section_name;
+                            stopRename();
+                        }
+                    }).catch(() => {
+                        msg.popup({
+                            type: 'error',
+                            msg: 'Something went wrong. Please try again.',
+                            duration: 3000,
+                        });
+                    }).finally(() => saveButton.disabled = false);
+                });
+
+                name.classList.add('hidden');
+                editButton.classList.add('hidden');
+                name.after(form);
+                input.focus();
+                input.select();
             };
 
-            // Builds the same row as the Blade loop below; textContent so the name is never read as HTML
-            const addSectionRow = (section) => {
-                const row = document.createElement('li');
-                row.className = 'flex items-center gap-4 rounded-2xl border border-gray-100 bg-gray-50 px-5 py-3';
-
-                const number = document.createElement('span');
-                number.className = 'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white';
-                number.textContent = sectionList.children.length + 1;
-
-                const name = document.createElement('span');
-                name.className = 'font-semibold text-gray-800';
-                name.textContent = section.section_name;
-
-                row.append(number, name);
-                sectionList.append(row);
-                sectionList.classList.remove('hidden');
-            };
-
-            sectionForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                addButton.disabled = true;
-                showSectionError('');
-
-                fetch("{{ route('instructor.courses.sections.store', $course) }}", {
-                    method: 'POST',
-                    body: JSON.stringify({ section_name: sectionInput.value }),
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Content-Type': 'application/json',
-                        // Without this, Laravel answers validation errors with an HTML redirect instead of JSON
-                        'Accept': 'application/json',
-                    },
-                }).then(async res => ({ ok: res.ok, status: res.status, data: await res.json() }))
-                .then(({ ok, status, data }) => {
-                    // Validation errors go under the input, everything else is a popup
-                    if (status === 422)
-                        return showSectionError(data.errors?.section_name?.[0] ?? data.message);
-
-                    msg.popup({
-                        type: ok ? 'success' : 'error',
-                        msg: data.message || 'An error occurred',
-                        duration: ok ? 4000 : 3000,
-                    });
-
-                    if (ok) {
-                        addSectionRow(data.section);
-                        sectionInput.value = '';
-                    }
-                }).catch(() => {
-                    msg.popup({
-                        type: 'error',
-                        msg: 'Something went wrong. Please try again.',
-                        duration: 3000,
-                    });
-                }).finally(() => addButton.disabled = false);
+            sectionList.addEventListener('click', (e) => {
+                const editButton = e.target.closest('[data-edit-section]');
+                if (editButton) startRename(editButton.closest('[data-section-row]'));
             });
         });
     </script>
@@ -168,22 +206,18 @@
 
             <ol data-section-list class="mb-4 space-y-2 @if($course->courseSections->isEmpty()) hidden @endif">
                 @foreach($course->courseSections as $section)
-                    <li class="flex items-center gap-4 rounded-2xl border border-gray-100 bg-gray-50 px-5 py-3">
+                    <li data-section-row data-section-id="{{ $section->id }}" class="flex items-center gap-4 rounded-2xl border border-gray-100 bg-gray-50 px-5 py-3">
                         <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">{{ $loop->iteration }}</span>
-                        <span class="font-semibold text-gray-800">{{ $section->section_name }}</span>
+                        <span data-section-name class="grow font-semibold text-gray-800">{{ $section->section_name }}</span>
+                        <button type="button" data-edit-section title="Rename section" class="text-gray-400 hover:text-primary hover:cursor-pointer"><i class="fas fa-pen"></i></button>
                     </li>
                 @endforeach
             </ol>
 
-            <form data-section-form class="flex flex-col gap-2 sm:flex-row sm:items-start">
-                <div class="grow">
-                    <input type="text" name="section_name" maxlength="255" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="New section name, e.g. Introduction to Semiconductors" />
-                    <p data-section-error class="hidden mt-1 text-sm font-semibold text-red-600"></p>
-                </div>
-                <button type="submit" class="rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:opacity-90 hover:cursor-pointer disabled:opacity-50">
-                    <i class="fas fa-plus mr-2"></i>Add section
-                </button>
-            </form>
+            {{-- A section is created together with its content, on its own page --}}
+            <a href="{{ route('instructor.courses.sections.create', $course) }}" class="inline-flex items-center rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:opacity-90">
+                <i class="fas fa-plus mr-2"></i>Add section
+            </a>
         </div>
 
         {{-- Students Table --}}

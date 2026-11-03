@@ -48,5 +48,7 @@ Route::prefix('instructor')->middleware(['auth', 'role-redirect'])->group(functi
     Route::get('courses/{course}/manage', [InstructorController::class, 'showCourseManagementPage'])->name('instructor.courses.manage')->can('manage', 'course');
     Route::get('courses/{course}/my-students', [InstructorController::class, 'manageStudents'])->name('instructor.courses.students')->can('manage', 'course');
     Route::get('courses/{course}/students/{student}/messages', [MessageController::class, 'conversation'])->name('instructor.courses.conversation')->can('manage', 'course');
-    Route::post('courses/{course}/sections', [CourseSectionController::class, 'store'])->name('instructor.courses.sections.store')->can('manage', 'course');
+    Route::get('courses/{course}/sections/create', [CourseSectionController::class, 'create'])->name('instructor.courses.sections.create')->can('manage', 'course');
+    Route::post('courses/{course}/sections',[CourseSectionController::class, 'store'])->name('instructor.courses.sections.store')->can('manage', 'course');
+    Route::patch('courses/{course}/sections/{courseSection}', [CourseSectionController::class, 'update'])->name('instructor.courses.sections.update')->can('manage', 'course')->scopeBindings();
 });
