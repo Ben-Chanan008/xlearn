@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use Illuminate\Auth\Access\Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,13 +25,7 @@ class DashboardController extends Controller
 
     public function show(Course $course)
     {
-        $isEnrolled = $this->isEnrolled($course);
-
-        if($isEnrolled){
-            return redirect()->route('courses.learn', $course->slug);
-        }
-
-        return view('dashboard.show', ['course' => Course::with('owner')->find($course->id), 'isEnrolled' => $isEnrolled]);
+        return view('dashboard.show', ['course' => Course::with('owner')->find($course->id)]);
     }
 
     public function learn(Course $course)

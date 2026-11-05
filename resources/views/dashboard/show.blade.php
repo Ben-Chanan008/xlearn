@@ -142,7 +142,7 @@
                                         Try Free Preview
                                     </button>
                                     @else
-                                        <a href="{{ route('courses.enroll', $course) }}" class="w-full block text-center bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/30 transition-all active:scale-95 text-lg">
+                                        <a href="{{ route('instructor.courses.manage', $course) }}" class="w-full block text-center bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/30 transition-all active:scale-95 text-lg">
                                             View students
                                         </a>
                                     @endcan

@@ -42,6 +42,11 @@
                 </a>
             </li>
             <li class="mr-2">
+                <a href="{{ route('course.messages', $course) }}" class="inline-block p-4 border-b-2 {{ request()->routeIs('course.messages') ? $activeClass : $inActiveClass }}">
+                    <i class="fas fa-comment mr-2"></i>Messages
+                </a>
+            </li>
+            <li class="mr-2">
                 <a href="{{ route('course.grades', $course) }}"
                     class="inline-block p-4 border-b-2 {{ request()->routeIs('course.grades') ? $activeClass : $inActiveClass }}">
                     <i class="fas fa-graduation-cap mr-2"></i>Grades

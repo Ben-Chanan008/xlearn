@@ -12,6 +12,12 @@ class CourseSection extends Model
 {
     use HasFactory, SoftDeletes;
 
+    // protected $fillable = [
+    //     'course_id',
+    //     'section_name',
+    //     'position',
+    // ];
+
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
@@ -19,6 +25,7 @@ class CourseSection extends Model
 
     public function sectionContents(): HasMany
     {
-        return $this->hasMany(CourseSectionsContent::class);
+        // In the order the instructor built them
+        return $this->hasMany(CourseSectionsContent::class)->orderBy('id');
     }
 }

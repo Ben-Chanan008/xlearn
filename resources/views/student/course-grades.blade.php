@@ -40,7 +40,10 @@
                         </div>
                     </section>
                 @empty
-                    <p>Instructor is still building the course.</p>
+                    <div class="p-8 flex items-center gap-3 flex-col">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p>Instructor is still building the course.</p>
+                    </div>
                 @endforelse
             </div>
         </div>

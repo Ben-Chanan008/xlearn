@@ -1,12 +1,33 @@
-﻿@push('scripts')
+@push('styles')
+    <style>
+        /* Lesson HTML from the instructor's editor; only these tags survive the sanitizer */
+        .lesson-content h2 { margin: 1.5rem 0 0.5rem; font-size: 1.25rem; font-weight: 700; color: #111827; }
+        .lesson-content h3 { margin: 1.25rem 0 0.5rem; font-size: 1.125rem; font-weight: 700; color: #111827; }
+        .lesson-content p { margin-bottom: 0.75rem; }
+        .lesson-content ul, .lesson-content ol { margin-bottom: 0.75rem; padding-left: 1.5rem; }
+        .lesson-content ul { list-style: disc; }
+        .lesson-content ol { list-style: decimal; }
+        .lesson-content a { color: var(--color-golden); font-weight: 600; text-decoration: underline; }
+        .lesson-content blockquote { margin-bottom: 0.75rem; border-left: 4px solid var(--color-tea-green); padding-left: 1rem; font-style: italic; }
+        .lesson-content pre { margin-bottom: 0.75rem; overflow-x: auto; border-radius: 0.75rem; background: #1f2937; padding: 1rem; color: #f3f4f6; font-family: ui-monospace, monospace; line-height: 1.5; }
+        .lesson-content code { font-family: ui-monospace, monospace; }
+    </style>
+@endpush
+
+@push('scripts')
     <script>
         window.addEventListener('DOMContentLoaded', () => {
-            const assignmentForm = document.getElementById('assignment-submit');
+            const lastViewedKey = 'lastViewedSection:{{ $course->id }}';
 
-            assignmentForm.addEventListener('change', (e) => {
+            // Due dates are stored in UTC; show them in the student's own time zone
+            document.querySelectorAll('[data-local-time]').forEach(time => {
+                time.textContent = new Date(time.dateTime).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+            });
+
+            // One form per assignment, each previewing into its own box
+            document.querySelectorAll('[data-assignment-form]').forEach(assignmentForm => assignmentForm.addEventListener('change', (e) => {
                 const fileInput = e.target.files;
-                const preview = document.getElementById('preview');
-                const reader = new FileReader();
+                const preview = assignmentForm.querySelector('[data-preview]');
 
                 [...fileInput].forEach(file => {
                     const fileURL = URL.createObjectURL(file);
@@ -14,68 +35,38 @@
                         const img = document.createElement('img');
                         img.src = fileURL;
                         img.alt = 'Assignment Preview';
-                        img.id = 'preview';
                         img.className = 'mx-auto max-h-48 object-contain';
                         // preview.outerHTML = `<img src="${event.target.result}" alt="Assignment Preview" id="preview" class="mx-auto max-h-48 object-contain">`;
-                        preview.appendChild(img) 
+                        preview.appendChild(img)
                     }
                     else{
-                        const i = document.createElement('i');  
+                        const i = document.createElement('i');
                         i.className = 'fas fa-2x fa-file-lines text-golden';
                         preview.appendChild(i);
                     }
-                    
+
                     const fileName = document.createElement('span');
                     fileName.className = 'block mt-2 text-xs opacity-75';
-                    fileName.textContent = file.name;  
+                    fileName.textContent = file.name;
                     preview.appendChild(fileName);
-                     console.log(fileURL);
-
                 });
-                
-
-            });
-
-            const markAsDone = () => {
-                const markAsDoneButtons = document.querySelector('.mark-as-done');
-                markAsDoneButtons.addEventListener('click', () => {
-                        markAsDoneButtons.classList.toggle('bg-primary');
-                        markAsDoneButtons.classList.toggle('text-white');
-                        markAsDoneButtons.classList.toggle('bg-gray-50');
-                        markAsDoneButtons.classList.toggle('text-gray-700');
-                    });
-
-                // fetch('/mark-as-done', {
-                //     method: 'POST',
-                //     headers: {
-                //         'Content-Type': 'application/json',
-                //     },
-                //     body: JSON.stringify({
-                //         '_token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                //         'section_content_id': ,
-                //     })
-                // });  
-            };
-
-            markAsDone();
+            }));
 
 
             const sectionButtons = document.querySelectorAll('.js-section-toggle');
             const sectionDetails = document.querySelectorAll('.js-section-detail');
 
+            /** Activate the section from the sidebar on the student learn page **/
             function activateSection(sectionId) {
                 const sectionHeader = document.getElementById('section-header');
                 sectionHeader.textContent = document.querySelector(`.js-section-toggle[data-section="${sectionId}"] p`).textContent;
 
+
                 sectionButtons.forEach(button => {
                     const isActive = button.dataset.section === sectionId;
-                    // button.classList.toggle('bg-primary/10', isActive);
-                    // button.classList.toggle('border-primary/20', isActive);
-                    // button.classList.toggle('border-transparent', !isActive);
-                    // button.classList.toggle('text-primary', isActive);
-                    // button.classList.toggle('text-gray-700', !isActive);
-                    // button.querySelector('.chevron-icon')?.classList.toggle('rotate-180', isActive);
                 });
+                    
+                localStorage.setItem(lastViewedKey, sectionId);
 
                 sectionDetails.forEach(detail => {
                     detail.classList.toggle('hidden', detail.dataset.section !== sectionId);
@@ -83,7 +74,10 @@
             }
 
             if (sectionButtons.length > 0) {
-                activateSection(sectionButtons[0].dataset.section);
+                const lastViewedSection = localStorage.getItem(lastViewedKey);
+                const stillThere = [...sectionButtons].some(button => button.dataset.section === lastViewedSection);
+
+                activateSection(stillThere ? lastViewedSection : sectionButtons[0].dataset.section);
                 sectionButtons.forEach(button => {
                     button.addEventListener('click', () => {
                         activateSection(button.dataset.section);
@@ -176,37 +170,77 @@
                                                 <button class="mt-1 mark-as-done bg-gray-500 rounded-2xl py-2 px-4 text-sm font-semibold hover:bg-primary hover:cursor-pointer hover:text-white shadow-lg
                                                 text-gray-300"><i class="fas fa-check text-tea-green"></i> Mark As Done</button>
                                             </div>
-                                        </div> 
+                                        </div>
                                     </div>
 
-                                    <p class="mt-4 text-sm leading-7 text-gray-600">{{ $content->content_information }} Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ipsam sequi laboriosam architecto molestiae aliquam ullam repellendus cumque, necessitatibus quis cum nulla dolorum nostrum dolor dicta laborum vel consequatur est modi beatae quos possimus esse suscipit a. Quasi, animi. Eos optio ullam dolor. Aut, accusamus itaque adipisci quia quibusdam natus odio perspiciatis dolorum aperiam at facere nisi, ipsum expedita velit autem, possimus vel. Mollitia, nobis iusto quis quae quam obcaecati minima quaerat beatae accusantium consequuntur enim. Reiciendis impedit dolores quae corporis animi commodi alias. Incidunt, eveniet? Voluptatibus, impedit eum iure eaque magni magnam, dolorem tempora quaerat quibusdam architecto recusandae. Veritatis quae cumque obcaecati, voluptas magni optio harum cum explicabo eos, vitae sed sequi, animi ipsum ab ut illum quis esse placeat repellendus? Nobis dignissimos, vel voluptates enim tempora quasi! Debitis quo exercitationem explicabo soluta rerum a minus. Est id veritatis quia sed exercitationem a necessitatibus eius obcaecati, pariatur aliquid officiis maxime qui dolorem harum nulla iure. Minus maiores at amet, odio doloribus eius rem quia expedita eaque asperiores laboriosam quae modi! Ratione blanditiis perspiciatis aliquid sapiente eaque dolor itaque. Fuga at quae eligendi perspiciatis beatae pariatur, perferendis modi consequuntur cumque asperiores neque ipsum possimus, porro blanditiis soluta magnam deleniti ea, veritatis maiores quo assumenda! Ducimus dicta ut mollitia quia hic blanditiis repellat quasi aut voluptatibus eum architecto sapiente quibusdam non voluptatum a eaque, dolor magnam sit quod voluptates perspiciatis ad, maiores est corporis? In magni accusamus exercitationem molestias sunt doloribus neque. Dolore alias ab natus rerum asperiores vel explicabo. Veniam perferendis a, ab ipsam dolor pariatur dolores quia possimus expedita temporibus dolorum saepe iure quibusdam quo fugiat ex. Neque esse in optio autem. Consectetur in laboriosam, nulla nam placeat quod mollitia obcaecati quaerat commodi perferendis enim culpa, eligendi incidunt autem distinctio id adipisci ex tempora ipsum sequi quidem animi. Eligendi eaque, aliquam ipsum inventore cumque praesentium nobis quae illum natus!</p>
+                                    @if($content->content_information)
+                                        {{-- Unescaped on purpose: StoreCourseSectionRequest sanitizes it down to the editor's tags before it's saved --}}
+                                        <div class="lesson-content mt-4 text-sm leading-7 text-gray-600">{!! $content->content_information !!}</div>
+                                    @endif
 
                                     @if($content->files)
-                                        <div class="mt-4 bg-gray-50 p-4 text-gray-700">
-                                            <p class="font-bold uppercase my-3 text-sm">Attached Files</p>  
-                                            <div class="bg-tea-green w-1/4 p-4 rounded-lg text-left flex gap-x-2 items-center">
-                                                <i class="fas fa-2x fa-file-lines text-golden"></i>
-                                                {{-- <p class="mt-2 break-all">{{ $content->files }}</p> --}}
-                                                <a href="{{ $content->files }}" download="{{ $content->files }}" class="text-golden font-bold underline">Content 1</a>
+                                        @php
+                                            // Lectures and images play inline; everything else is a download
+                                            [$media, $downloads] = collect($content->files)->partition(fn ($file) => preg_match('#^(video|audio)/#', $file['mime'] ?? ''));
+                                        @endphp
+
+                                        @foreach($media as $file)
+                                            <figure class="mt-4">
+                                                @if(str_starts_with($file['mime'], 'video/'))
+                                                    <video controls preload="metadata" class="max-h-[70vh] w-full rounded-2xl bg-black" src="{{ Storage::url($file['path']) }}"></video>
+                                                @elseif(str_starts_with($file['mime'], 'audio/'))
+                                                    <audio controls preload="metadata" class="w-full" src="{{ Storage::url($file['path']) }}"></audio>
+                                                {{-- @else
+                                                    <img src="{{ Storage::url($file['path']) }}" alt="{{ $file['name'] }}" class="max-h-[70vh] rounded-2xl" /> --}}
+                                                @endif
+                                                <figcaption class="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                                                    <span class="truncate">{{ $file['name'] }}</span>
+                                                    <a href="{{ Storage::url($file['path']) }}" download="{{ $file['name'] }}" class="font-bold text-golden underline">Download</a>
+                                                </figcaption>
+                                            </figure>
+                                        @endforeach
+
+                                        @if($downloads->isNotEmpty())
+                                            <div class="mt-4 bg-gray-50 p-4 text-gray-700">
+                                                <p class="font-bold uppercase my-3 text-sm">Attached Files</p>
+                                                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                                    @foreach($downloads as $file)
+                                                        @php
+                                                            $icon = match (strtolower(pathinfo($file['name'], PATHINFO_EXTENSION))) {
+                                                                'pdf' => 'fa-file-pdf',
+                                                                'ppt', 'pptx', 'odp', 'key' => 'fa-file-powerpoint',
+                                                                'doc', 'docx' => 'fa-file-word',
+                                                                'xls', 'xlsx', 'csv' => 'fa-file-excel',
+                                                                'zip' => 'fa-file-zipper',
+                                                                default => 'fa-file-lines',
+                                                            };
+                                                        @endphp
+                                                        <div class="bg-tea-green p-4 rounded-lg text-left flex gap-x-2 items-center">
+                                                            <i class="fas fa-2x {{ $icon }} text-golden"></i>
+                                                            <a href="{{ Storage::url($file['path']) }}" download="{{ $file['name'] }}" class="truncate text-golden font-bold underline">{{ $file['name'] }}</a>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
                                             </div>
-                                        </div>
+                                        @endif
                                     @endif
 
                                     @if($content->content_type === 'assignment')
                                         <div class="mt-4 gap-3">
                                             <p class="font-bold uppercase my-3 text-sm">Assignments</p>
-                                            <form action="{{ route('courses.submit-assignment', $content->id) }}" method="POST" id="assignment-submit" enctype="multipart/form-data">
+                                            <form action="{{ route('courses.submit-assignment', $content->id) }}" method="POST" data-assignment-form enctype="multipart/form-data">
                                                 @csrf
-                                                <label for="assignment" class="hover:cursor-pointer my-4">
+                                                <label for="assignment-{{ $content->id }}" class="hover:cursor-pointer my-4">
                                                     <div class="p-8 border border-dashed rounded-xl text-center ">
-                                                        <div id="preview"></div>
+                                                        <div data-preview></div>
                                                         <div>
                                                             <i class="fas fa-2x fa-cloud-arrow-up text-golden"></i>
                                                             <span class="block mt-2 text-xs opacity-75">Upload assignment</span>
                                                         </div>
                                                     </div>
                                                 </label>
-                                                <input type="file" id="assignment" name="assignment[]" class="hidden" multiple>
+                                                {{-- fix up multiple file upload --}}
+                                                <input type="file" id="assignment-{{ $content->id }}" name="assignment[]" class="hidden" multiple>
                                                 <button type="submit" class="mt-3 inline-flex items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-bold hover:cursor-pointer text-white transition hover:bg-primary/90">
                                                     Submit Assignment
                                                 </button>
@@ -215,7 +249,15 @@
                                                 @enderror
                                             </form>
                                             <span class="inline-block mt-3 text-xs font-semibold text-slate-600">
-                                                Deadline: To be confirmed
+                                                @if($content->due_at)
+                                                    {{-- UTC fallback until the script shows it in the student's time zone --}}
+                                                    Due: <time datetime="{{ $content->due_at->toIso8601String() }}" data-local-time>{{ $content->due_at->format('M j, Y g:i A') }} UTC</time>
+                                                    @if($content->due_at->isPast())
+                                                        <span class="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-red-700">Past due</span>
+                                                    @endif
+                                                @else
+                                                    <span class="ml-2 px-2 py-0.5 text-red-700">No due date</span>
+                                                @endif
                                             </span>
                                         </div>
                                     @endif
