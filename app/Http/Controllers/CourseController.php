@@ -143,13 +143,9 @@ class CourseController extends Controller
             'assignment' => ['required', 'array'],
             'assignment.*' => 'file|mimes:pdf,doc,docx|max:4096', // Max size 4MB
         ]);
-
-        // $response = Gate::inspect('enrolled', $course);
-        // Check if the user is enrolled in the course
-        if (Gate::denies('enrolled', $course)) {
+        
+        if (Gate::denies('enrolled', $course))
             return redirect()->back()->with('error', 'You are not enrolled in this course.');
-        }
-        dd($request->file('assignment'));
 
         try{
             // Store the assignment file
@@ -158,17 +154,10 @@ class CourseController extends Controller
 
                 // Save the assignment submission to the database (assuming you have a model for it)
                 $courseSectionContent->assignments()->create([
-                    'students_id' => Auth::id(),
+                    'student_id' => Auth::id(),
                     'assignment_file' => $path,
                 ]);
             }
-            // $path = $request->file('assignment')->store("assignments/course-$course->course_code/section-#{$courseSectionContent->courseSection->id}", 'public');
-
-            // Save the assignment submission to the database (assuming you have a model for it)
-            // $courseSectionContent->assignments()->create([
-            //     'students_id' => Auth::id(),
-            //     'assignment_file' => $path,
-            // ]);
 
             //Notify the instructor of the submission (assuming you have a notification system in place)
 

@@ -24,7 +24,7 @@ Route::post('send-message', [MessageController::class, '__invoke'])->name('send-
 
 Route::prefix('student')->middleware(['auth'])->group(function (){
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('role-redirect');
-    Route::get('courses/{course:slug}', [DashboardController::class, 'show'])->name('courses.show');
+    Route::get('courses/{course:slug}', [DashboardController::class, 'show'])->name('courses.show')->can('enrolled', 'course');
     Route::get('courses/{course:slug}/learn', [DashboardController::class, 'learn'])->name('courses.learn');
     Route::get('my-courses', [DashboardController::class, 'myCourses'])->name('my-courses');
     Route::get('courses/{course}/enroll', [CourseController::class, 'enroll'])->name('courses.enroll')->can('enroll', 'course');
