@@ -43,7 +43,7 @@ class VerifyCourseCanBePublished implements ShouldQueue
                 Log::info("Course {$this->course->id} has been reverted to draft.");
                 break;
             default:
-                Log::info("Course {$this->course->id} has {$sectionsCount} sections and is in status '{$this->course->status}'. No action taken.");
+                Log::error("Course {$this->course->id} has {$sectionsCount} sections and is in status '{$this->course->status}'. No action taken.");
         }
     }
 }

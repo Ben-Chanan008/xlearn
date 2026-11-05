@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RenameCourseSectionRequest;
 use App\Http\Requests\StoreCourseSectionRequest;
 use App\Http\Requests\UpdateCourseSectionRequest;
+use App\Jobs\VerifyCourseCanBePublished;
 use App\Models\Course;
 use App\Models\CourseSection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class CourseSectionController extends Controller
@@ -43,6 +45,9 @@ class CourseSectionController extends Controller
             // Shown by the success banner on the page the browser goes to next
             session()->flash('success', 'Section created successfully');
 
+            // Check if the course can be published after adding a new section
+            VerifyCourseCanBePublished::dispatch($course);
+
             return response()->json([
                 'message' => 'Section created successfully',
                 'redirect' => route('instructor.courses.manage', $course),
@@ -50,6 +55,7 @@ class CourseSectionController extends Controller
         } catch (\Exception $e) {
             Storage::disk('public')->delete($storedPaths);
 
+            Log::error("Something went wrong: " . $e->getMessage());
             return response()->json(['message' => 'Something went wrong'], 500);
         }
     }
@@ -152,6 +158,9 @@ class CourseSectionController extends Controller
                     ->where('position', '>', $courseSection->position)
                     ->decrement('position');
             });
+
+            VerifyCourseCanBePublished::dispatch($course);
+
 
             return response()->json(['message' => 'Section deleted successfully']);
         } catch (\Exception $e) {
