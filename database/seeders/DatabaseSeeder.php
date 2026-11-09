@@ -27,7 +27,14 @@ class DatabaseSeeder extends Seeder
 
         $instructors = User::factory(10)
             ->instructor()
-            ->hasCourses(25)
+            ->has(
+                Course::factory(25)->pending()
+                ->has(
+                    CourseSection::factory(4)
+                    ->sequence(['position' => 1], ['position' => 2], ['position' => 3], ['position' => 4])
+                    ->withContents(3)
+                )
+            )
             ->create();
 
         $defaultStudent = User::factory(30)

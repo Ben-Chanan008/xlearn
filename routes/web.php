@@ -5,6 +5,7 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseSectionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstructorController;
+use App\Http\Controllers\InstructorReviewController;
 use App\Http\Controllers\MessageController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,13 +25,14 @@ Route::post('send-message', [MessageController::class, '__invoke'])->name('send-
 
 Route::prefix('student')->middleware(['auth'])->group(function (){
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('role-redirect');
-    Route::get('courses/{course:slug}', [DashboardController::class, 'show'])->name('courses.show')->can('enrolled', 'course');
+    Route::get('courses/{course:slug}', [DashboardController::class, 'show'])->name('courses.show')->can('view', 'course');
     Route::get('courses/{course:slug}/learn', [DashboardController::class, 'learn'])->name('courses.learn');
     Route::get('my-courses', [DashboardController::class, 'myCourses'])->name('my-courses');
     Route::get('courses/{course}/enroll', [CourseController::class, 'enroll'])->name('courses.enroll')->can('enroll', 'course');
     Route::post('courses/{course}/checkout', [CourseController::class, 'checkout'])->name('courses.checkout');
     Route::get('courses/{course}/grades', [CourseController::class, 'showGrades'])->name('course.grades');
     Route::get('courses/{course}/messages', [MessageController::class, 'showMessages'])->name('course.messages')->can('enrolled', 'course');
+    Route::post('courses/{course}/review', [InstructorReviewController::class, 'store'])->name('course.review')->can('enrolled', 'course');
     Route::post('submit-assignment/{courseSectionContent}', [CourseController::class, 'submitAssignment'])->name('courses.submit-assignment');
 });
 

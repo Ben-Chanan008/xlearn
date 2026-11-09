@@ -13,7 +13,7 @@
             </div>
 
             <div class="">
-                @forelse ($course->courseSections as $idx => $section)
+                @forelse ($gradeable as $idx => $section)
                     <section class="py-4 flex flex-col items-center">
                         <div class="flex w-[90%] flex-col items-center">
                             <p class="uppercase font-bold text-2xl self-start my-4">Section {{ $idx + 1 }}:  {{ $section->section_name }}</p>

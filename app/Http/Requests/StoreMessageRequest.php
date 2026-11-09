@@ -9,7 +9,7 @@ class StoreMessageRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     * The sender and the receiver must both belong to the course, as its owner or as an enrolled student.
+     * Messages only go between the course's instructor and one of its enrolled students, never student to student.
      */
     public function authorize(): bool
     {
@@ -18,14 +18,18 @@ class StoreMessageRequest extends FormRequest
         if (! $course)
             return false;
 
-        return $this->belongsToCourse($this->user()->id, $course)
-            && $this->belongsToCourse($this->input('receiver_id'), $course);
+        $senderId = $this->user()->id;
+        $receiverId = (int) $this->input('receiver_id');
+
+        if ($course->instructor_id == $senderId)
+            return $this->isEnrolled($receiverId, $course);
+
+        return $course->instructor_id == $receiverId && $this->isEnrolled($senderId, $course);
     }
 
-    private function belongsToCourse($userId, Course $course): bool
+    private function isEnrolled(int $userId, Course $course): bool
     {
-        return $course->instructor_id == $userId
-            || $course->students()->where('student_id', $userId)->exists();
+        return $course->students()->where('student_id', $userId)->exists();
     }
 
     /**
@@ -36,10 +40,9 @@ class StoreMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'sender_id' => 'required|exists:users,id',
             'course_id' => 'required|integer|exists:courses,id',
             'receiver_id' => 'required|integer|exists:users,id',
-            'content' => 'required|string|max:255',
+            'content' => 'required|string|max:2000',
         ];
     }
 }

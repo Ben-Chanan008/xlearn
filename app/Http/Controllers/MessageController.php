@@ -3,26 +3,36 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreMessageRequest;
+use App\Models\InstructorReview;
 use App\Models\Message;
 use App\Models\Course;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class MessageController extends Controller
 {
     public function showMessages(Course $course)
     {
-
-        $messages = Message::with('sender')
-            ->where('receiver_id', Auth::id())
-            ->where('course_id', $course->id)
-            ->where('status', 'active')
-            ->latest()
-            ->limit(5)
+        // Every message both ways, whatever its status, so the student sees their whole history
+        $messages = Message::where('course_id', $course->id)
+            ->between(Auth::id(), $course->instructor_id)
+            ->oldest()
             ->get();
 
-        return view('student.messages', compact('course', 'messages'));
+        // Opening the page counts as reading the instructor's messages
+        Message::where('course_id', $course->id)
+            ->where('sender_id', $course->instructor_id)
+            ->where('receiver_id', Auth::id())
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        // Pre-fills the review form if the student already rated this instructor
+        $review = InstructorReview::where('course_id', $course->id)->where('student_id', Auth::id())->first();
+
+        return view('student.messages', compact('course', 'messages', 'review'));
     }
 
     /**
@@ -30,16 +40,13 @@ class MessageController extends Controller
      */
     public function conversation(Course $course, User $student)
     {
-        abort_unless($course->students()->where('student_id', $student->id)->exists(), 404);
+        Gate::forUser($student)->authorize('enrolled', $course);
 
         $instructorId = Auth::id();
 
+        // Every message whatever its status, same as the student's page
         $messages = Message::where('course_id', $course->id)
-            ->where('status', 'active')
-            ->where(function ($query) use ($instructorId, $student) {
-                $query->where(fn ($q) => $q->where('sender_id', $instructorId)->where('receiver_id', $student->id))
-                    ->orWhere(fn ($q) => $q->where('sender_id', $student->id)->where('receiver_id', $instructorId));
-            })
+            ->between($instructorId, $student->id)
             ->oldest()
             ->get();
 
@@ -74,13 +81,32 @@ class MessageController extends Controller
         $validated = $request->validated();
 
         try{
-            Message::create([
-                'sender_id' => $validated['sender_id'],
-                'receiver_id' => $validated['receiver_id'],
-                'course_id' => $validated['course_id'],
-                'content' => $validated['content'],
-            ]);
-                
+            DB::transaction(function () use ($request, $validated) {
+                $course = Course::find($validated['course_id']);
+                // Always the logged-in user, never the request body, so nobody can send as someone else
+                $senderId = $request->user()->id;
+                $fromInstructor = $course->instructor_id == $senderId;
+
+                // The open wait in this conversation, if the student is already waiting on a reply
+                $openWait = fn () => Message::where('course_id', $course->id)
+                    ->where('sender_id', $fromInstructor ? $validated['receiver_id'] : $senderId)
+                    ->where('awaits_reply', true)
+                    ->whereNull('replied_at');
+
+                Message::create([
+                    'sender_id' => $senderId,
+                    'receiver_id' => $validated['receiver_id'],
+                    'course_id' => $course->id,
+                    'content' => $validated['content'],
+                    // Only the first unanswered message starts the clock (question 3)
+                    'awaits_reply' => ! $fromInstructor && ! $openWait()->exists(),
+                ]);
+
+                // Any instructor message to the student stops the clock
+                if ($fromInstructor)
+                    $openWait()->update(['replied_at' => now()]);
+            });
+
             return response()->json(['message' => 'Message sent successfully.'], 200);
         } catch (\Exception $e) {
             // Log the error for debugging purposes

@@ -143,6 +143,13 @@
                     <div class="p-4">
                         <p class="font-extrabold uppercase text-xs"><i class="fas fa-person-chalkboard mr-2"></i>Instructor</p>
                         <p class="text-golden font-semibold">{{ $course->owner->fullName() }}</p>
+                        <p class="text-xs text-gray-500">
+                            <i class="fas fa-star text-yellow-500"></i>
+                            {{ $course->owner->rating !== null ? number_format($course->owner->rating, 1) : 'New instructor' }}
+                            @if($course->owner->replyTimeLabel())
+                                · {{ $course->owner->replyTimeLabel() }}
+                            @endif
+                        </p>
                     </div>
                 </div>
             </div>

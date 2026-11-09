@@ -157,9 +157,24 @@
 
 <x-layout :footer="false">
     <div class="msg-alert"></div>
-    <x-header><i class="fas mr-1 fa-people-group"></i>My Students</x-header>
+    <x-back-link :href="route('courses.show', $course->slug)" />
+    <x-header><i class="fas mr-1 fa-hotel"></i>Student Hub</x-header>
 
-    <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+    @if($course->isDraft())
+        <div data-draft-notice class="mb-8 flex items-start gap-3 rounded-3xl border border-orange-200 bg-orange-50 p-5">
+            <i class="fas fa-pen-ruler mt-1 text-orange-600"></i>
+            <div>
+                <p class="font-bold text-gray-900">This course is a draft</p>
+                <p class="text-sm text-gray-600">
+                    Students can't see it yet. It has {{ $course->courseSections()->count() }} of {{ \App\Models\Course::SECTIONS_TO_PUBLISH }} sections and publishes automatically once it has
+                    {{ \App\Models\Course::SECTIONS_TO_PUBLISH }}.
+                    <a href="{{ route('instructor.courses.sections.create', $course) }}" class="font-bold text-orange-700 hover:opacity-75">Add a section</a>
+                </p>
+            </div>
+        </div>
+    @endif
+
+    <div class="bg-white rounded-3xl mb-8 shadow-xl border border-gray-100 overflow-hidden">
         {{-- Header / Summary Section --}}
         <div class="p-8 bg-gray-50/50">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -265,6 +280,10 @@
         </div>
 
         {{-- Students Table --}}
+        <div x-data="{ query: '' }">
+        <div class="border-t border-gray-100 px-8 pt-6 pb-4">
+            <x-search-bar x-model="query" placeholder="Search students by name or email..." />
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -278,7 +297,10 @@
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     @forelse($course->students as $student)
-                        <tr class="hover:bg-gray-50/50 transition duration-200">
+                        <tr
+                            x-show="@js(Str::lower($student->fullName() . ' ' . $student->email)).includes(query.toLowerCase())"
+                            class="hover:bg-gray-50/50 transition duration-200"
+                        >
                             {{-- Name & Email --}}
                             <td class="px-8 py-6">
                                 <div class="flex items-center space-x-4">
@@ -355,6 +377,7 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
         </div>
     </div>
 </x-layout>

@@ -4,10 +4,7 @@
 @endphp
 @props(['course'])
 <div class="py-8 px-4 sm:px-6 lg:px-8">
-    <!-- Back to Courses -->
-    <a href="{{ url()->previous() }}" class="inline-flex items-center text-sm font-bold text-primary mb-6 hover:-translate-x-1 transition-transform">
-        <i class="fas fa-arrow-left mr-2"></i> Go Back
-    </a>
+    <x-back-link>Go Back</x-back-link>
 
     <x-header>{{ $course->name }}</x-header>
 

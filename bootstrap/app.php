@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\CheckInactiveMessages;
+use App\Jobs\RecalculateInstructorRatings;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -24,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->job(new CheckInactiveMessages())
         ->weeklyOn(5, '22:20')
         ->when(fn () => date('W') % 3 === 1); // Run every 3 weeks
+
+        $schedule->job(new RecalculateInstructorRatings())->hourly();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -3,24 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
-use Illuminate\Auth\Access\Gate;
+use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $courses = Course::with('owner')->latest()->paginate(15);
+        // Same search as the instructor dashboard: across every page, kept on the page links
+        $courses = Course::published()
+            ->when($request->query('search'), fn ($query, $search) => $query->where('name', 'like', "%{$search}%"))
+            ->with('owner')
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
         return view('dashboard.index', compact('courses'));
-    }
-
-    public function isEnrolled(Course $course)
-    {
-        return $course->students()->where(['student_id' => Auth::id()])->exists();
     }
 
     public function show(Course $course)
@@ -33,7 +35,7 @@ class DashboardController extends Controller
         $course->load(['owner', 'students', 'courseSections.sectionContents']);
 
         // Ensure student is enrolled
-        if (!$course->students->contains(Auth::user())) {
+        if (Gate::denies('enrolled', $course)) {
             return redirect()->route('courses.show', $course->slug)->with('error', 'You are not enrolled in this course.');
         }
 
@@ -49,7 +51,7 @@ class DashboardController extends Controller
 
     public function myCourses(Request $request)
     {
-        $enrolledCourses = $request->user()->studentCourses;
+        $enrolledCourses = $request->user()->studentCourses()->published()->get();
 
         // motivational messages
         $messages = [
@@ -80,7 +82,8 @@ class DashboardController extends Controller
     public function instructorCourses(Request $request)
     {
         if($request->user()->isInstructor()){
-            $courses = $request->user()->courses()->latest()->paginate(8);
+            // Section counts feed the draft badge
+            $courses = $request->user()->courses()->withCount('courseSections')->latest()->paginate(8);
             return view('instructor.my-courses', compact('courses'));
         }
 
@@ -89,7 +92,25 @@ class DashboardController extends Controller
 
     public function instructorDashboard(Request $request)
     {
-        $courses = $request->user()->courses()->latest()->paginate(15);
-        return view('instructor.dashboard', compact('courses'));
+        // Section counts feed the draft badge
+        // Searched in the query, not the browser, so it covers every page; withQueryString keeps ?search on the page links
+        $courses = $request->user()->courses()
+            ->when($request->query('search'), fn ($query, $search) => $query->where('name', 'like', "%{$search}%"))
+            ->withCount('courseSections')
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        // Counted across every page, not just the 15 shown
+        $draftCount = $request->user()->courses()->where('status', '!=', 'published')->count();
+
+        // Conversations where a student has waited over 24 hours, oldest first
+        $overdueMessages = Message::overdue()
+            ->where('receiver_id', $request->user()->id)
+            ->with(['sender', 'course'])
+            ->oldest()
+            ->get();
+
+        return view('instructor.dashboard', compact('courses', 'overdueMessages', 'draftCount'));
     }
 }

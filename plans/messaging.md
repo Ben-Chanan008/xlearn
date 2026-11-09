@@ -26,7 +26,7 @@ Each has a recommendation. Steps that depend on one say so.
 | 5 | Where is the rating stored? | Columns on `users`, refreshed hourly by a scheduled job. Listing pages show many instructors, and computing on every page view would add a query for each one. | 4 |
 | 6 | Calendar hours or working hours? | Calendar hours, weekends included. Students are waiting on weekends too, and it's much simpler. | 4 |
 | 7 | Existing messages? | No backfill. The clock columns start empty, so ratings count from deploy onwards. | 3 |
-| 8 | Where does the rubric code live? | `app/Support/InstructorRating.php`, a plain class with static methods. There is no services folder yet. | 4 |
+| 8 | Where does the rubric code live? | `app/Services/InstructorRating.php`, a plain class with static methods. It does the rating work rather than acting as a general helper, so it goes in a new `app/Services` folder. | 4 |
 
 ---
 
@@ -134,6 +134,7 @@ use Illuminate\Database\Eloquent\Builder;
 /**
  * Messages either way between two people
  */
+
 public function scopeBetween(Builder $query, int $userId, int $otherId): void
 {
     $query->where(fn ($q) => $q
@@ -276,12 +277,12 @@ Schema::table('users', function (Blueprint $table) {
 });
 ```
 
-### `app/Support/InstructorRating.php`
+### `app/Services/InstructorRating.php`
 
 ```php
 <?php
 
-namespace App\Support;
+namespace App\Services;
 
 use App\Models\Message;
 use App\Models\User;
@@ -303,7 +304,7 @@ class InstructorRating
      */
     public static function points(Message $message): ?int
     {
-        $hours = $message->created_at->diffInMinutes($message->replied_at ?? now()) / 60;
+        $hours = $message->created_at->diffInHours($message->replied_at ?? now());
 
         if (! $message->replied_at && $hours < 24)
             return null;
@@ -436,5 +437,6 @@ public function handle(): void
 - **Real-time delivery** (polling or websockets). Today you reload to see new messages.
 - **Email or in-app notifications** for new messages.
 - **"No reply needed":** a student's "Thanks!" starts the clock. A button for the instructor that sets `replied_at` without sending a message would fix that, but it can be abused, so it needs its own decision.
+- **Two clocks from one wait (step 3):** `DB::transaction` keeps saving the message and stopping the clock together, but it doesn't lock anything. If a student sends two messages at the same moment, both requests can see "no open wait" and both get `awaits_reply = true`, so one wait is scored twice. It's rare and costs one extra scored message. The fix is to lock the conversation before checking, e.g. `$course->students()->where('student_id', $studentId)->lockForUpdate()->first()` at the top of the transaction, so the second request waits until the first one commits.
 - **Attachments** in messages.
 - **Unread count for students** in the nav.

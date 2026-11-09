@@ -29,11 +29,9 @@
                 </div>
             </div>
 
-            <div class="w-full my-4 p-3 bg-gray-100 rounded-xl flex gap-2 items-center">
-                <i class="fas fa-magnifying-glass"></i>
-                <input type="text" class="w-full outline-0" placeholder="Search..."/>
-            </div>
+            <x-live-search placeholder="Search courses..." />
 
+            <div data-search-results>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                 @forelse($courses as $course)
                     <a href="{{ route('courses.show', $course->slug) }}" class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300 flex flex-col group">
@@ -78,15 +76,24 @@
                         </div>
                     </a>
                 @empty
+                    @if(request('search'))
+                    <div class="col-span-full py-12 text-center bg-white rounded-3xl border border-dashed border-gray-300">
+                        <i class="fas fa-search text-4xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900">No courses match "{{ request('search') }}"</h3>
+                        <a href="{{ route('dashboard') }}" class="mt-4 inline-block text-sm font-bold text-primary hover:opacity-75">Clear search</a>
+                    </div>
+                    @else
                     <div class="col-span-full py-12 text-center bg-white rounded-3xl border border-dashed border-gray-300">
                         <i class="fas fa-book-open text-4xl text-gray-300 mb-4"></i>
                         <h3 class="text-lg font-medium text-gray-900">No courses available yet</h3>
                         <p class="text-gray-500">Check back later for new learning opportunities.</p>
                     </div>
+                    @endif
                 @endforelse
             </div>
             <div class="">
                 {{ $courses->links()  }}
+            </div>
             </div>
             {{-- Course Leaders Section --}}
             <div class="mt-16">

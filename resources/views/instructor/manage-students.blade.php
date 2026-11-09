@@ -19,7 +19,6 @@
                 body: JSON.stringify({
                     receiver_id: parseInt(receiverId),
                     course_id: parseInt(courseIdInput.value),
-                    sender_id: parseInt("{{ auth()->user()->id }}"),
                     content: content,
                 }),
                 headers: {
@@ -302,6 +301,12 @@
                                             <span data-unread-dot title="{{ $unread }} unread {{ Str::plural('reply', $unread) }}" class="absolute -top-2 -right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">{{ $unread }}</span>
                                         @endif
                                     </button>
+                                    @if($overdueStudentIds->contains($student->id))
+                                        <span data-overdue-badge class="inline-flex items-center rounded-2xl bg-orange-100 px-3.5 py-2 text-sm font-semibold text-orange-700">
+                                            <i class="fas fa-hourglass-half mr-2"></i>
+                                            Waiting 1d+
+                                        </span>
+                                    @endif
                                     <button class="inline-flex items-center rounded-2xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                                         <i class="fas fa-file-alt mr-2"></i>
                                         View assignments
