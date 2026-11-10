@@ -6,13 +6,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -33,6 +35,7 @@ class User extends Authenticatable
         'response_score',
         'on_time_rate',
         'rating_updated_at',
+        'avatar',
     ];
 
     /**
@@ -70,6 +73,45 @@ class User extends Authenticatable
     public function initials(): string
     {
         return strtoupper($this->first_name[0] . $this->last_name[0]);
+    }
+
+    /**
+     * Public URL of the profile photo, or null so views fall back to initials()
+     */
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar ? asset('storage/' . $this->avatar) : null;
+    }
+
+    /**
+     * "Ada L.": how reviewers are shown publicly
+     */
+    public function shortName(): string
+    {
+        return $this->first_name . ' ' . strtoupper($this->last_name[0]) . '.';
+    }
+
+    public function instructorProfile(): HasOne
+    {
+        return $this->hasOne(InstructorProfile::class);
+    }
+
+    /**
+     * Share of the profile that's filled in, 0–100: photo, headline, bio, expertise and at least one link
+     */
+    public function profileCompletion(): int
+    {
+        $profile = $this->instructorProfile;
+
+        $filled = collect([
+            $this->avatar,
+            $profile?->headline,
+            $profile?->bio,
+            $profile?->expertise,
+            $profile?->website ?? $profile?->linkedin,
+        ])->filter()->count();
+
+        return (int) round($filled / 5 * 100);
     }
 
     public function courses()

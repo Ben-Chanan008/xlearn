@@ -10,6 +10,26 @@
         {{-- Tabs Section --}}
         <x-dashboard-tab />
 
+        @if($profileCompletion < 100)
+            <div data-profile-banner class="mb-8 flex flex-col gap-4 rounded-3xl bg-primary p-6 text-white sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-start gap-4">
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-golden">
+                        <i class="fas fa-id-badge text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold">Complete your profile · {{ $profileCompletion }}%</p>
+                        <p class="text-sm text-white/70">Add a photo, a headline and a bio so students know who's teaching before they buy.</p>
+                        <div class="mt-3 h-2 w-full max-w-xs overflow-hidden rounded-full bg-white/15">
+                            <div class="h-full rounded-full bg-golden" style="width: {{ $profileCompletion }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ route('instructors.show', auth()->user()) }}" class="shrink-0 rounded-2xl bg-golden px-5 py-3 text-center text-sm font-bold text-white hover:opacity-90">
+                    Finish profile <i class="fas fa-arrow-right ml-1 text-xs"></i>
+                </a>
+            </div>
+        @endif
+
         {{-- Rating and replies --}}
         @php($me = auth()->user())
         <div class="mb-10 grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">

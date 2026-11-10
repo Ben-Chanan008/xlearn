@@ -22,9 +22,13 @@
         @auth
             <div class="flex mx-auto items-center space-x-3 relative" x-data="{ open: false }">
                 <button @click="open = !open" class="flex items-center space-x-3 focus:outline-none cursor-pointer">
-                    <div class="rounded-full h-15 w-15 flex justify-center items-center bg-gray-50 border border-gray-100 shadow-sm">
-                        <i class="fas fa-2x fa-user text-gray-400"></i>
-                    </div>
+                    @if(auth()->user()->avatarUrl())
+                        <img src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->fullName() }}" class="h-15 w-15 rounded-full object-cover border border-gray-100 shadow-sm">
+                    @else
+                        <div class="rounded-full h-15 w-15 flex justify-center items-center bg-gray-50 border border-gray-100 shadow-sm">
+                            <i class="fas fa-2x fa-user text-gray-400"></i>
+                        </div>
+                    @endif
                     <div class="text-left">
                         <p class="text-xs text-gray-500 leading-none">Hello,</p>
                         <p class="font-bold text-gray-800">{{ auth()->user()->fullName()}} <i class="fas fa-chevron-down ml-1 text-xs transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i></p>
@@ -46,6 +50,12 @@
                         <i class="fas fa-columns w-5 text-gray-400"></i>
                         <span class="ml-2">Dashboard</span>
                     </a>
+                    @if(auth()->user()->isInstructor())
+                        <a href="{{ route('instructors.show', auth()->user()) }}" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition duration-200">
+                            <i class="fas fa-id-badge w-5 text-gray-400"></i>
+                            <span class="ml-2">My profile</span>
+                        </a>
+                    @endif
                     <a href="#" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition duration-200">
                         <i class="fas fa-cog w-5 text-gray-400"></i>
                         <span class="ml-2">Settings</span>

@@ -113,15 +113,14 @@
 
 			<aside class="space-y-6">
 				<div class="rounded-3xl bg-primary p-6 text-white shadow-sm">
-					<div class="flex items-center gap-4">
-						<div class="flex h-14 w-14 items-center justify-center rounded-full bg-white/15 text-xl font-extrabold">
-							{{ $course->owner->initials() }}
-						</div>
+					<a href="{{ route('instructors.show', $course->owner) }}" class="group flex items-center gap-4">
+						<x-avatar :user="$course->owner" class="ring-2 ring-white/20" />
 						<div>
 							<p class="text-xs font-bold uppercase tracking-wider text-golden">Your instructor</p>
-							<h2 class="mt-1 text-lg font-extrabold">{{ $course->owner->fullName() }}</h2>
+							<h2 class="mt-1 text-lg font-extrabold group-hover:underline">{{ $course->owner->fullName() }}</h2>
+							<p class="text-xs text-white/60">View profile <i class="fas fa-arrow-right ml-1 text-[10px]"></i></p>
 						</div>
-					</div>
+					</a>
 					<div class="mt-6 border-t border-white/15 pt-5">
 						<p class="text-sm leading-6 text-white/75">Questions about the material? Send your instructor a message here.</p>
 						@if($course->owner->replyTimeLabel())

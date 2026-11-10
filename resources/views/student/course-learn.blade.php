@@ -142,7 +142,10 @@
                     </div>
                     <div class="p-4">
                         <p class="font-extrabold uppercase text-xs"><i class="fas fa-person-chalkboard mr-2"></i>Instructor</p>
-                        <p class="text-golden font-semibold">{{ $course->owner->fullName() }}</p>
+                        <a href="{{ route('instructors.show', $course->owner) }}" class="flex items-center gap-2 text-golden font-semibold hover:underline">
+                            <x-avatar :user="$course->owner" size="xs" />
+                            {{ $course->owner->fullName() }}
+                        </a>
                         <p class="text-xs text-gray-500">
                             <i class="fas fa-star text-yellow-500"></i>
                             {{ $course->owner->rating !== null ? number_format($course->owner->rating, 1) : 'New instructor' }}

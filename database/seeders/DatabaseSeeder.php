@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\CourseSectionsContent;
+use App\Models\InstructorProfile;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -36,6 +37,9 @@ class DatabaseSeeder extends Seeder
                 )
             )
             ->create();
+
+        // Most instructors have filled in their profile; the last 3 haven't, so the empty states show
+        $instructors->take(7)->each(fn (User $instructor) => InstructorProfile::factory()->for($instructor)->create());
 
         $defaultStudent = User::factory(30)
             ->student()

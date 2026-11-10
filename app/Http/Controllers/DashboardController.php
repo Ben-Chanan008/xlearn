@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -22,7 +23,16 @@ class DashboardController extends Controller
             ->latest()
             ->paginate(15)
             ->withQueryString();
-        return view('dashboard.index', compact('courses'));
+
+        // Course leaders: the top-rated instructors who've filled in a profile (unrated ones sort last)
+        $leaders = User::where('role', 'instructor')
+            ->whereHas('instructorProfile', fn ($query) => $query->whereNotNull('bio'))
+            ->with('instructorProfile')
+            ->orderByDesc('rating')
+            ->take(3)
+            ->get();
+
+        return view('dashboard.index', compact('courses', 'leaders'));
     }
 
     public function show(Course $course)
@@ -111,6 +121,9 @@ class DashboardController extends Controller
             ->oldest()
             ->get();
 
-        return view('instructor.dashboard', compact('courses', 'overdueMessages', 'draftCount'));
+        // For the "Complete your profile" banner
+        $profileCompletion = $request->user()->profileCompletion();
+
+        return view('instructor.dashboard', compact('courses', 'overdueMessages', 'draftCount', 'profileCompletion'));
     }
 }

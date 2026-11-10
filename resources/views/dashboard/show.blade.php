@@ -52,18 +52,16 @@
 
                         <!-- Instructor & Meta -->
                         <div class="flex flex-wrap items-center gap-6 pt-4 border-t border-gray-100">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                                    <i class="fas fa-chalkboard-teacher text-xl"></i>
-                                </div>
+                            <a href="{{ route('instructors.show', $course->owner) }}" class="group flex items-center space-x-3">
+                                <x-avatar :user="$course->owner" />
                                 <div>
                                     <p class="text-xs text-gray-500 uppercase font-bold tracking-tighter">Instructor</p>
-                                    <p class="font-bold text-gray-900">{{ $course->owner->fullName() ?? 'Expert Instructor' }}</p>
+                                    <p class="font-bold text-gray-900 group-hover:text-primary group-hover:underline">{{ $course->owner->fullName() ?? 'Expert Instructor' }}</p>
                                     @if($course->owner->replyTimeLabel())
                                         <p class="text-xs text-gray-500">{{ $course->owner->replyTimeLabel() }}</p>
                                     @endif
                                 </div>
-                            </div>
+                            </a>
                             <div class="flex items-center space-x-3">
                                 <div class="w-12 h-12 rounded-full bg-tea-green flex items-center justify-center text-primary">
                                     <i class="fas fa-calendar-alt text-xl"></i>

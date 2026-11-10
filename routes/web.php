@@ -5,6 +5,7 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseSectionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstructorController;
+use App\Http\Controllers\InstructorProfileController;
 use App\Http\Controllers\InstructorReviewController;
 use App\Http\Controllers\MessageController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,13 @@ Route::post('sign-up', [AuthController::class, 'register'])->name('register.post
 Route::get('logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 Route::view('forgot-password', 'auth.forgot-password')->name('password.request')->middleware('guest');
 Route::post('send-message', [MessageController::class, '__invoke'])->name('send-message')->middleware('auth');
+
+// Students and instructors both open profiles, so these sit outside the student/instructor prefixes
+Route::middleware('auth')->group(function () {
+    Route::get('instructors/{user}/profile', [InstructorProfileController::class, 'show'])->name('instructors.show');
+    Route::put('instructors/{user}/update-profile', [InstructorProfileController::class, 'update'])->name('instructors.update');
+    Route::delete('delete-profile/{user}', [InstructorProfileController::class, 'deleteProfile'])->name('instructors.delete');
+});
 
 Route::prefix('student')->middleware(['auth'])->group(function (){
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('role-redirect');
