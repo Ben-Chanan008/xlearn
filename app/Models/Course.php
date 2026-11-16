@@ -58,6 +58,12 @@ class Course extends Model
         return $this->status !== 'published';
     }
 
+    // Soft-deleting a course soft-deletes its sections too
+    protected static function booted(): void
+    {
+        static::deleting(fn (Course $course) => $course->courseSections->each->delete());
+    }
+
     public function courseSections(): HasMany
     {
         return $this->hasMany(CourseSection::class)->orderBy('position');

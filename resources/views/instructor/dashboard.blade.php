@@ -45,11 +45,11 @@
                 <dl class="mt-6 grid grid-cols-2 gap-4 border-t border-white/15 pt-5 text-sm">
                     <div>
                         <dt class="text-white/60">Response score</dt>
-                        <dd class="mt-1 text-lg font-bold">{{ $me->response_score !== null ? number_format($me->response_score, 1) . ' / 5' : 'Not enough data' }}</dd>
+                        <dd class="mt-1 text-lg font-bold">{{ $me->response_score !== null ? number_format($me->response_score, 1) . ' / 5' : '-' }}</dd>
                     </div>
                     <div>
                         <dt class="text-white/60">Replied within 24h</dt>
-                        <dd class="mt-1 text-lg font-bold">{{ $me->on_time_rate !== null ? $me->on_time_rate . '%' : 'Not enough data' }}</dd>
+                        <dd class="mt-1 text-lg font-bold">{{ $me->on_time_rate !== null ? $me->on_time_rate . '%' : '-' }}</dd>
                     </div>
                 </dl>
             </div>
@@ -60,15 +60,17 @@
 
                 <ul class="mt-4 divide-y divide-gray-100" data-overdue-list>
                     @forelse($overdueMessages as $waiting)
-                        <li class="flex items-center justify-between gap-4 py-3">
-                            <div class="min-w-0">
-                                <p class="font-bold text-gray-900">{{ $waiting->sender->fullName() }} <span class="font-normal text-gray-500">in {{ $waiting->course->name }}</span></p>
-                                <p class="truncate text-sm text-gray-500">{{ $waiting->content }}</p>
-                            </div>
-                            <a href="{{ route('instructor.courses.students', $waiting->course) }}" class="shrink-0 text-sm font-bold text-primary hover:opacity-75">
-                                Waiting {{ $waiting->created_at->diffForHumans(null, true) }} <i class="fas fa-arrow-right ml-1 text-xs"></i>
-                            </a>
-                        </li>
+                        @if($loop->iteration == 1)
+                            <li class="flex items-center justify-between gap-4 py-3 bg-tea-green px-4 rounded-xl shadow-lg">
+                                <div class="min-w-0">
+                                    <p class="font-bold text-gray-900">{{ $waiting->sender->fullName() }} <span class="text-xs font-bold text-gray-500">Course {{ $waiting->course->course_code }}</span></p>
+                                    <p class="truncate text-sm text-gray-500"><span class="text-golden font-bold">Course:</span> {{ $waiting->course->name }}</p>
+                                </div>
+                                <a href="{{ route('instructor.courses.students', $waiting->course) }}" class="shrink-0 text-sm font-bold text-primary hover:opacity-75">
+                                    Waiting {{ $waiting->created_at->diffForHumans(null, true) }} <i class="fas fa-arrow-right ml-1 text-xs"></i>
+                                </a>
+                            </li>
+                        @endif
                     @empty
                         <li class="py-6 text-center text-sm text-gray-400">Nobody is waiting. Nice work.</li>
                     @endforelse

@@ -3,6 +3,43 @@
     $activeClass = 'border-primary rounded-t-lg active group text-primary border-primary';
 @endphp
 @props(['course'])
+@php
+    // Instructor messages this student hasn't read yet in this course
+    $unreadMessages = \App\Models\Message::where('course_id', $course->id)
+        ->where('sender_id', $course->instructor_id)
+        ->where('receiver_id', auth()->id())
+        ->where('is_read', false)
+        ->count();
+@endphp
+
+{{-- The messages page shows new messages itself, so only the other tabs bump the dot --}}
+{{-- @unless(request()->routeIs('course.messages'))
+    @push('scripts')
+        <script>
+            // Echo loads as a module, so wait for it before subscribing
+            window.addEventListener('DOMContentLoaded', () => {
+                Echo.private('message.{{ $course->id }}')
+                    .listen('MessageSent', ({ message }) => {
+                        if (message.receiver_id != {{ auth()->id() }})
+                            return;
+
+                        const tab = document.querySelector('[data-messages-tab]');
+                        let dot = tab.querySelector('[data-unread-dot]');
+                        if (!dot) {
+                            dot = document.createElement('span');
+                            dot.dataset.unreadDot = '';
+                            dot.className = 'absolute top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white';
+                            tab.append(dot);
+                        }
+
+                        const count = (parseInt(dot.textContent) || 0) + 1;
+                        dot.textContent = count;
+                        dot.title = `${count} unread ${count === 1 ? 'message' : 'messages'}`;
+                    });
+            });
+        </script>
+    @endpush
+@endunless --}}
 <div class="py-8 px-4 sm:px-6 lg:px-8">
     <x-back-link>Go Back</x-back-link>
 
@@ -39,8 +76,11 @@
                 </a>
             </li>
             <li class="mr-2">
-                <a href="{{ route('course.messages', $course) }}" class="inline-block p-4 border-b-2 {{ request()->routeIs('course.messages') ? $activeClass : $inActiveClass }}">
+                <a href="{{ route('course.messages', $course) }}" data-messages-tab class="relative inline-block p-4 border-b-2 {{ request()->routeIs('course.messages') ? $activeClass : $inActiveClass }}">
                     <i class="fas fa-comment mr-2"></i>Messages
+                    @if($unreadMessages)
+                        <span data-unread-dot title="{{ $unreadMessages }} unread {{ Str::plural('message', $unreadMessages) }}" class="absolute top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">{{ $unreadMessages }}</span>
+                    @endif
                 </a>
             </li>
             <li class="mr-2">

@@ -1,5 +1,31 @@
 @push('scripts')
 	<script>
+		window.onload = () => {
+			const me = "{{ auth()->id() }}"
+
+			Echo.private('message.{{ $course->id }}')
+				.listen('MessageSent', ({ message }) => { 
+					console.log(message);
+					if(parseInt(me) != parseInt(message.sender_id))
+						addBubble(message.content, false, message.created_at)
+				})
+
+			// Keeps every "x minutes ago" in the thread current while the page stays open
+			setInterval(() => document.querySelectorAll('[data-thread] time[datetime]')
+				.forEach(time => time.textContent = timeAgo(time.dateTime)), 30000);
+
+			let sending = false;
+			const textArea = document.querySelector('#message-form textarea');
+			document.querySelector('#message-form').addEventListener('keydown', function(e) {
+				if(e.key === 'Enter'){
+					sending = true;
+
+					// console.log(e.currentTarget)
+					sendMessage(textArea.value)
+						.then(sent => { sending = false; if (sent) textArea.value = ''; });
+				}
+			});
+		}
 		// Sends a message to the instructor, adds it to the thread, and resolves to true if the server saved it
 		function sendMessage(content) {
 			const msg = new Msg('.msg-alert');
@@ -19,9 +45,12 @@
 			}).then(async res => {
 				const response = await res.json();
 
-				if (res.ok)
-					addBubble(content);
-				else
+				if (res.ok){
+					console.log('Message sent successfully:', response.data)
+    
+					addBubble(content, true, response.data.created_at);
+					
+				}else
 					msg.popup({ type: 'error', msg: response.message || 'An error occurred', duration: 3000 });
 
 				return res.ok;
@@ -32,13 +61,26 @@
 			});
 		}
 
-		// Appends the student's own message to the bottom of the thread
-		function addBubble(content) {
+		// "just now", "2 minutes ago", "3 hours ago"... like Carbon's diffForHumans(), from an ISO timestamp
+		function timeAgo(iso) {
+			const seconds = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+			if (seconds < 60)
+				return 'just now';
+
+			const units = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]];
+			const [unit, size] = units.find(([, size]) => seconds >= size);
+
+			return new Intl.RelativeTimeFormat('en', { numeric: 'always' }).format(-Math.floor(seconds / size), unit);
+		}
+
+		// Appends a message to the bottom of the thread; createdAt is the message's ISO timestamp
+		function addBubble(content, mine = true, createdAt = new Date().toISOString()) {
 			const thread = document.querySelector('[data-thread]');
 			thread.querySelector('[data-thread-empty]')?.remove();
 
 			const bubble = document.createElement('div');
-			bubble.className = 'w-fit max-w-[80%] rounded-2xl px-4 py-2 text-sm ml-auto bg-primary text-white';
+			bubble.className = 'w-fit max-w-[80%] rounded-2xl px-4 py-2 text-sm ' +
+        			(mine ? 'ml-auto bg-primary text-white' : 'bg-white text-gray-700 ring-1 ring-gray-100');
 
 			// textContent, never innerHTML: the message is shown exactly as typed and can't inject HTML
 			const text = document.createElement('p');
@@ -46,12 +88,19 @@
 			text.textContent = content;
 
 			const time = document.createElement('time');
-			time.className = 'mt-1 block text-[11px] text-white/60';
-			time.textContent = 'just now';
+			time.className = 'mt-1 block text-[11px]' + (mine ? ' text-white/60' : ' text-gray-400');
+			time.dateTime = createdAt;
+			time.textContent = timeAgo(createdAt);
 
 			bubble.append(text, time);
 			thread.append(bubble);
 			thread.scrollTop = thread.scrollHeight;
+
+			// Every bubble is one more message in the conversation, sent or received
+			const counter = document.querySelector('[data-message-count]');
+			const total = parseInt(counter.dataset.messageCount) + 1;
+			counter.dataset.messageCount = total;
+			counter.textContent = `${total} message${total === 1 ? '' : 's'}`;
 		}
 	</script>
 @endpush
@@ -69,7 +118,7 @@
 			</div>
 			<div class="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100">
 				<i class="fas fa-envelope-open-text text-primary"></i>
-				<span class="text-sm font-bold text-gray-700">{{ $messages->count() }} message{{ $messages->count() === 1 ? '' : 's' }}</span>
+				<span data-message-count="{{ $messages->count() }}" class="text-sm font-bold text-gray-700">{{ $messages->count() }} message{{ $messages->count() === 1 ? '' : 's' }}</span>
 			</div>
 		</div>
 
@@ -88,7 +137,8 @@
 					@forelse($messages as $message)
 						@php($mine = $message->sender_id == auth()->id())
 						<div
-							x-show="@js(Str::lower($message->content)).includes(query.toLowerCase())"
+							data-receiver
+							{{-- x-show="@js(Str::lower($message->content)).includes(query.toLowerCase())" --}}
 							@class(['w-fit max-w-[80%] rounded-2xl px-4 py-2 text-sm', 'ml-auto bg-primary text-white' => $mine, 'bg-white text-gray-700 ring-1 ring-gray-100' => ! $mine])
 						>
 							<p class="whitespace-pre-line">{{ $message->content }}</p>
@@ -103,6 +153,7 @@
 					x-data="{ content: '', sending: false }"
 					@submit.prevent="sending = true; sendMessage(content).then(sent => { sending = false; if (sent) content = ''; })"
 					class="mt-4 flex items-end gap-2"
+					id="message-form"	
 				>
 					<textarea x-model="content" rows="2" maxlength="2000" required class="w-full rounded-2xl border border-gray-200 bg-white px-3 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20" placeholder="Message {{ $course->owner->fullName() }}..."></textarea>
 					<button type="submit" :disabled="sending || !content.trim()" class="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white hover:opacity-90 hover:cursor-pointer disabled:opacity-50" aria-label="Send message">

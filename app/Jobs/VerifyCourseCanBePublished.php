@@ -45,7 +45,5 @@ class VerifyCourseCanBePublished implements ShouldQueue
             default:
                 Log::error("Course {$this->course->id} has {$sectionsCount} sections and is in status '{$this->course->status}'. No action taken.");
         }
-
-        redirect()->refresh();
     }
 }

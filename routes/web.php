@@ -8,6 +8,7 @@ use App\Http\Controllers\InstructorController;
 use App\Http\Controllers\InstructorProfileController;
 use App\Http\Controllers\InstructorReviewController;
 use App\Http\Controllers\MessageController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -58,6 +59,7 @@ Route::prefix('instructor')->middleware(['auth', 'role-redirect'])->group(functi
     Route::get('courses/{course}/manage', [InstructorController::class, 'showCourseManagementPage'])->name('instructor.courses.manage')->can('manage', 'course');
     Route::get('courses/{course}/my-students', [InstructorController::class, 'manageStudents'])->name('instructor.courses.students')->can('manage', 'course');
     Route::get('courses/{course}/students/{student}/messages', [MessageController::class, 'conversation'])->name('instructor.courses.conversation')->can('manage', 'course');
+    Route::patch('courses/{course}/messages/read', [MessageController::class, 'markRead'])->name('instructor.courses.messages.read')->can('manage', 'course');
     Route::get('courses/{course}/sections/create', [CourseSectionController::class, 'create'])->name('instructor.courses.sections.create')->can('manage', 'course');
     Route::post('courses/{course}/sections',[CourseSectionController::class, 'store'])->name('instructor.courses.sections.store')->can('manage', 'course');
     Route::get('courses/{course}/sections/{courseSection}/edit', [CourseSectionController::class, 'edit'])->name('instructor.courses.sections.edit')->can('manage', 'course')->scopeBindings();
@@ -65,3 +67,7 @@ Route::prefix('instructor')->middleware(['auth', 'role-redirect'])->group(functi
     Route::delete('courses/{course}/sections/{courseSection}', [CourseSectionController::class, 'destroy'])->name('instructor.courses.sections.destroy')->can('manage', 'course')->scopeBindings();
     Route::patch('courses/{course}/sections/{courseSection}/name', [CourseSectionController::class, 'rename'])->name('instructor.courses.sections.rename')->can('manage', 'course')->scopeBindings();
 });
+/* 
+Route::get('test', function (Request $request) {
+    \App\Events\OrderShipmentUpdated::dispatch();
+}); */

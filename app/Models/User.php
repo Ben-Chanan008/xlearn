@@ -91,6 +91,16 @@ class User extends Authenticatable
         return $this->first_name . ' ' . strtoupper($this->last_name[0]) . '.';
     }
 
+    // Soft-deleting a user soft-deletes their profile and courses too
+    protected static function booted(): void
+    {
+        static::deleting(function (User $user) {
+            $user->instructorProfile?->delete();
+            // One by one, so each course's own deleting hook runs
+            $user->courses->each->delete();
+        });
+    }
+
     public function instructorProfile(): HasOne
     {
         return $this->hasOne(InstructorProfile::class);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\OrderShipmentUpdated;
 use App\Models\Course;
 use App\Models\Message;
 use App\Models\User;
@@ -91,13 +92,11 @@ class DashboardController extends Controller
 
     public function instructorCourses(Request $request)
     {
-        if($request->user()->isInstructor()){
+        if (Gate::allowIf($request->user()->isInstructor())) {
             // Section counts feed the draft badge
             $courses = $request->user()->courses()->withCount('courseSections')->latest()->paginate(8);
             return view('instructor.my-courses', compact('courses'));
         }
-
-        abort(403);
     }
 
     public function instructorDashboard(Request $request)

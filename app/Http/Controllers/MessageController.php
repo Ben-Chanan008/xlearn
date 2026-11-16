@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
+use App\Http\Requests\MarkMessagesReadRequest;
 use App\Http\Requests\StoreMessageRequest;
 use App\Models\InstructorReview;
 use App\Models\Message;
@@ -14,6 +16,8 @@ use Illuminate\Support\Facades\Gate;
 
 class MessageController extends Controller
 {
+    private object $message;
+
     public function showMessages(Course $course)
     {
         // Every message both ways, whatever its status, so the student sees their whole history
@@ -67,9 +71,20 @@ class MessageController extends Controller
                 'id' => $message->id,
                 'content' => $message->content,
                 'from_instructor' => $message->sender_id == $instructorId,
-                'sent_at' => $message->created_at->diffForHumans(),
+                // ISO, so the page can show "x minutes ago" and keep it current
+                'created_at' => $message->created_at,
             ]),
         ]);
+    }
+
+    /**
+     * Marks the messages that arrived live while the conversation dialog was open as read.
+     */
+    public function markRead(MarkMessagesReadRequest $request, Course $course)
+    {
+        Message::whereIn('id', $request->validated('ids'))->update(['is_read' => true]);
+
+        return response()->json(['message' => 'Messages marked as read.']);
     }
 
     /**
@@ -79,7 +94,6 @@ class MessageController extends Controller
     {
         //
         $validated = $request->validated();
-
         try{
             DB::transaction(function () use ($request, $validated) {
                 $course = Course::find($validated['course_id']);
@@ -93,7 +107,7 @@ class MessageController extends Controller
                     ->where('awaits_reply', true)
                     ->whereNull('replied_at');
 
-                Message::create([
+                $this->message = Message::create([
                     'sender_id' => $senderId,
                     'receiver_id' => $validated['receiver_id'],
                     'course_id' => $course->id,
@@ -101,13 +115,15 @@ class MessageController extends Controller
                     // Only the first unanswered message starts the clock (question 3)
                     'awaits_reply' => ! $fromInstructor && ! $openWait()->exists(),
                 ]);
+                
+                broadcast(new MessageSent($this->message))->toOthers();
 
                 // Any instructor message to the student stops the clock
                 if ($fromInstructor)
                     $openWait()->update(['replied_at' => now()]);
             });
 
-            return response()->json(['message' => 'Message sent successfully.'], 200);
+            return response()->json(['message' => 'Message sent successfully.', 'data' => $this->message ], 200);
         } catch (\Exception $e) {
             // Log the error for debugging purposes
             Log::error('Failed to send message: ' . $e->getMessage());

@@ -59,7 +59,7 @@
                                 </div>
                                 <div class="flex items-center text-sm text-gray-500">
                                     <i class="fas fa-users w-5 text-gray-400"></i>
-                                    <span class="ml-2"><span class="font-semibold text-gray-700">0</span> students enrolled</span>
+                                    <span class="ml-2"><span class="font-semibold text-gray-700">{{ $course->students->count() }}</span> students enrolled</span>
                                 </div>
                                 <div class="flex space-x-1">
                                     <i class="fas fa-calendar-alt text-gray-400"></i>
@@ -94,9 +94,9 @@
             <div class="">
                 {{ $courses->links()  }}
             </div>
-            </div>
-            {{-- Course Leaders Section --}}
-            <div class="mt-16">
+        </div>
+            {{-- Course Leaders Section: todo: sth else will be added there --}}
+            {{-- <div class="mt-16">
                 <div class="flex items-center justify-between mb-8">
                     <x-header>Meet Our Course Leaders</x-header>
                 </div>
@@ -137,7 +137,7 @@
                         <p class="col-span-full text-center text-sm text-gray-500">Our instructors are still setting up their profiles.</p>
                     @endforelse
                 </div>
-            </div>
+            </div> --}}
 
             {{-- Reviews Section --}}
             <div class="mt-24">

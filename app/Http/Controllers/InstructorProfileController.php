@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UpdateInstructorProfileRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 
 class InstructorProfileController extends Controller
@@ -12,7 +14,7 @@ class InstructorProfileController extends Controller
     public function show(Request $request, User $user)
     {
         // Only instructors have a profile page
-        abort_unless($user->isInstructor(), 403);
+        Gate::allowIf($user->isInstructor());
 
         $user->load('instructorProfile');
 
@@ -69,9 +71,10 @@ class InstructorProfileController extends Controller
 
     public function deleteProfile(Request $request, User $user)
     {
-        abort_unless($request->user()->is($user), 403);
+        Gate::allowIf($request->user()->is($user));
 
-        $user->delete();
+        // All or nothing: the user, their profile, courses, sections and contents
+        DB::transaction(fn () => $user->delete());
 
         return response()->json([
             'message' => 'Profile deleted',
