@@ -78,6 +78,7 @@ class CourseController extends Controller
         $number_of_students = $course->max_students;
         $number_of_enrolled = $course->students()->get()->count();
 
+        //TODO: create a waitlist            
         if($number_of_enrolled === $number_of_students){
             if($course->status !== 'active')
                 return back()->with('error', 'Course is full, wait for the next available seats');
@@ -169,6 +170,13 @@ class CourseController extends Controller
 
     public function showGrades(Request $request, Course $course)
     {
-        return view('student.course-grades', compact('course'));
+        $gradeable = $course->courseSections()
+                    ->with(
+                        ['sectionContents' => fn($q) => $q->where('content_type', 'assignment')]
+                    )
+                    ->get()
+                    ->filter(fn($assignments) => $assignments->sectionContents->isNotEmpty());
+
+        return view('student.course-grades', compact('course', 'gradeable'));
     }
 }

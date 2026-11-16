@@ -11,6 +11,21 @@
             </ol>
         </nav>
 
+        {{-- Only the instructor can open a draft (CoursePolicy::view), so this is always for them --}}
+        @if($course->isDraft())
+            <div data-draft-notice class="mb-8 flex items-start gap-3 rounded-3xl border border-orange-200 bg-orange-50 p-5">
+                <i class="fas fa-pen-ruler mt-1 text-orange-600"></i>
+                <div>
+                    <p class="font-bold text-gray-900">This course is a draft</p>
+                    <p class="text-sm text-gray-600">
+                        Students can't see it yet. It has {{ $course->courseSections()->count() }} of {{ \App\Models\Course::SECTIONS_TO_PUBLISH }} sections and publishes automatically once it has
+                        {{ \App\Models\Course::SECTIONS_TO_PUBLISH }}.
+                        <a href="{{ route('instructor.courses.sections.create', $course) }}" class="font-bold text-orange-700 hover:opacity-75">Add a section</a>
+                    </p>
+                </div>
+            </div>
+        @endif
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
             <!-- Left Column: Course Content -->
             <div class="lg:col-span-2 space-y-10">
@@ -37,15 +52,16 @@
 
                         <!-- Instructor & Meta -->
                         <div class="flex flex-wrap items-center gap-6 pt-4 border-t border-gray-100">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                                    <i class="fas fa-chalkboard-teacher text-xl"></i>
-                                </div>
+                            <a href="{{ route('instructors.show', $course->owner) }}" class="group flex items-center space-x-3">
+                                <x-avatar :user="$course->owner" />
                                 <div>
                                     <p class="text-xs text-gray-500 uppercase font-bold tracking-tighter">Instructor</p>
-                                    <p class="font-bold text-gray-900">{{ $course->owner->fullName() ?? 'Expert Instructor' }}</p>
+                                    <p class="font-bold text-gray-900 group-hover:text-primary group-hover:underline">{{ $course->owner->fullName() ?? 'Expert Instructor' }}</p>
+                                    @if($course->owner->replyTimeLabel())
+                                        <p class="text-xs text-gray-500">{{ $course->owner->replyTimeLabel() }}</p>
+                                    @endif
                                 </div>
-                            </div>
+                            </a>
                             <div class="flex items-center space-x-3">
                                 <div class="w-12 h-12 rounded-full bg-tea-green flex items-center justify-center text-primary">
                                     <i class="fas fa-calendar-alt text-xl"></i>
@@ -60,8 +76,8 @@
                                     <i class="fas fa-star text-xl"></i>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-500 uppercase font-bold tracking-tighter">Rating</p>
-                                    <p class="font-bold text-gray-900">4.9 (2.4k reviews)</p>
+                                    <p class="text-xs text-gray-500 uppercase font-bold tracking-tighter">Instructor rating</p>
+                                    <p class="font-bold text-gray-900">{{ $course->owner->rating !== null ? number_format($course->owner->rating, 1) . ' / 5' : 'New instructor' }}</p>
                                 </div>
                             </div>
                         </div>
@@ -133,19 +149,26 @@
                                 @endif
 
                                 <div class="space-y-4">
-                                    @can('enroll', $course)
-                                    <a href="{{ route('courses.enroll', $course) }}" class="w-full block text-center bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/30 transition-all active:scale-95 text-lg">
-                                        Enroll in Course
-                                    </a>
-                        
+                                        <div class="space-y-4 @if($course->owner->is(Auth::user())) hidden @endif">
+                                            @cannot('enrolled', $course)
+                                            <a href="{{ route('courses.enroll', $course) }}" class="w-full block text-center bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/30 transition-all active:scale-95 text-lg">
+                                                Enroll in Course
+                                            </a>    
+                                            @else   
+                                                <a href="{{ route('courses.learn', $course->slug) }}" class="w-full block text-center bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/30 transition-all active:scale-95 text-lg">
+                                                    Continue Learning
+                                                </a>
+                                            @endcannot
+                                        </div>
+                                        @can('manage', $course)
+                                            <a href="{{ route('instructor.courses.manage', $course) }}" class="w-full block text-center bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/30 transition-all active:scale-95 text-lg">
+                                                View students
+                                            </a>
+                                        @endcan
                                     <button class="w-full bg-gray-50 hover:bg-gray-100 text-gray-900 font-bold py-5 rounded-2xl transition-all border border-gray-200">
                                         Try Free Preview
                                     </button>
-                                    @else
-                                        <a href="{{ route('instructor.courses.manage', $course) }}" class="w-full block text-center bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-lg shadow-primary/30 transition-all active:scale-95 text-lg">
-                                            View students
-                                        </a>
-                                    @endcan
+                                    
                                 </div>
 
                                 <div class="space-y-4 pt-4">

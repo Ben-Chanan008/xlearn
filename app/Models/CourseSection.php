@@ -18,6 +18,12 @@ class CourseSection extends Model
     //     'position',
     // ];
 
+    // Soft-deleting a section soft-deletes its contents too
+    protected static function booted(): void
+    {
+        static::deleting(fn (CourseSection $section) => $section->sectionContents()->delete());
+    }
+
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);

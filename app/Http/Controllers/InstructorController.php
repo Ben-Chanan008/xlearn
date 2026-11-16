@@ -33,6 +33,13 @@ class InstructorController extends Controller
             ->groupBy('sender_id')
             ->pluck('total', 'sender_id');
 
-        return view('instructor.manage-students', compact('course', 'students', 'unreadCounts'));
+        // Students who've waited over 24 hours for a reply in this course, for the "Waiting 1d+" badge
+        $overdueStudentIds = Message::overdue()
+            ->where('course_id', $course->id)
+            ->where('receiver_id', Auth::id())
+            ->pluck('sender_id')
+            ->unique();
+
+        return view('instructor.manage-students', compact('course', 'students', 'unreadCounts', 'overdueStudentIds'));
     }
 }

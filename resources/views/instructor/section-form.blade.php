@@ -294,9 +294,7 @@
     <div class="msg-alert"></div>
     <x-header><i class="fas mr-1 fa-layer-group"></i>{{ $section ? 'Edit Section' : 'New Section' }}</x-header>
 
-    <a href="{{ route('instructor.courses.manage', $course) }}" class="mb-6 inline-flex items-center text-sm font-semibold text-primary hover:underline">
-        <i class="fas fa-arrow-left mr-2"></i>Back to {{ $course->name }}
-    </a>
+    <x-back-link :href="route('instructor.courses.manage', $course)">Back to {{ $course->name }}</x-back-link>
 
     <form data-section-builder class="mb-8 space-y-6">
         <div class="rounded-3xl border border-gray-100 bg-white p-8 shadow-xl">

@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\CheckInactiveMessages;
+use App\Jobs\RecalculateInstructorRatings;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
+        channels: __DIR__.'/../routes/channels.php',
         web: __DIR__ . '/../routes/web.php',
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
@@ -24,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->job(new CheckInactiveMessages())
         ->weeklyOn(5, '22:20')
         ->when(fn () => date('W') % 3 === 1); // Run every 3 weeks
+
+        $schedule->job(new RecalculateInstructorRatings())->hourly();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

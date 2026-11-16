@@ -5,6 +5,33 @@
         // console.log(url.searchParams.get('student'));
 
         window.addEventListener('DOMContentLoaded', (e) => {
+            Echo.private('message.{{ $course->id }}')
+                .listen('MessageSent', ({ message }) => {
+                    if(message.sender_id == {{ auth()->id() }}) return;
+
+                    // Their conversation is open: show it, and remember it so it's marked read when the dialog closes
+                    if (dialog.open && message.sender_id == dialogStudentId) {
+                        readWhileOpen.save([...readWhileOpen.get(), message.id]);
+                        return addBubble({ content: message.content, from_instructor: false, created_at: message.created_at });
+                    }
+
+                    // Otherwise bump the dot on that student's Message button, even if another student's dialog is open
+                    const button = document.querySelector(`[data-message-student="${message.sender_id}"]`);
+                    if (!button) return;
+
+                    let dot = button.querySelector('[data-unread-dot]');
+                    if (!dot) {
+                        dot = document.createElement('span');
+                        dot.dataset.unreadDot = '';
+                        dot.className = 'absolute -top-2 -right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white';
+                        button.append(dot);
+                    }
+
+                    const count = (parseInt(dot.textContent) || 0) + 1;
+                    dot.textContent = count;
+                    dot.title = `${count} unread ${count === 1 ? 'reply' : 'replies'}`;
+                });
+
             const studentCards = [...document.querySelectorAll(`[data-student-card]`)];
             const formSelect = document.querySelector('#select-student select');
             const messageStudentInput = document.querySelector('#message-student');
@@ -19,7 +46,6 @@
                 body: JSON.stringify({
                     receiver_id: parseInt(receiverId),
                     course_id: parseInt(courseIdInput.value),
-                    sender_id: parseInt("{{ auth()->user()->id }}"),
                     content: content,
                 }),
                 headers: {
@@ -28,7 +54,11 @@
                     // Without this, Laravel answers validation errors with an HTML redirect instead of JSON
                     'Accept': 'application/json',
                 },
-            }).then(async res => ({ ok: res.ok, message: (await res.json()).message }));
+            }).then(async res => {
+                const body = await res.json();
+                // data is the saved message, so the dialog can use its real created_at
+                return { ok: res.ok, message: body.message, data: body.data };
+            });
 
             messageForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -63,6 +93,15 @@
             const conversationUrl = "{{ route('instructor.courses.conversation', [$course, '__student__']) }}";
             let dialogStudentId = null;
 
+            // Ids of messages that arrived live while their dialog was open, kept until the server has marked them read
+            const markReadUrl = "{{ route('instructor.courses.messages.read', $course) }}";
+            const readWhileOpen = {
+                key: 'read-while-open:{{ $course->id }}',
+                get() { try { return JSON.parse(localStorage.getItem(this.key)) || []; } catch { return []; } },
+                // An empty list removes the key, so nothing is left in storage once the server has marked everything read
+                save(ids) { try { ids.length ? localStorage.setItem(this.key, JSON.stringify(ids)) : localStorage.removeItem(this.key); } catch {} },
+            };
+
             const showDialogError = (text) => {
                 dialogError.textContent = text;
                 dialogError.classList.toggle('hidden', !text);
@@ -76,7 +115,24 @@
                 dialogMessages.replaceChildren(notice);
             };
 
-            const addBubble = ({ content, from_instructor, sent_at }) => {
+            // "just now", "2 minutes ago", "3 hours ago"... like Carbon's diffForHumans(), from an ISO timestamp
+            const timeAgo = (iso) => {
+                const seconds = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+                if (seconds < 60)
+                    return 'just now';
+
+                const units = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]];
+                const [unit, size] = units.find(([, size]) => seconds >= size);
+
+                return new Intl.RelativeTimeFormat('en', { numeric: 'always' }).format(-Math.floor(seconds / size), unit);
+            };
+
+            // Keeps every "x minutes ago" in the open dialog current
+            setInterval(() => dialogMessages.querySelectorAll('time[datetime]')
+                .forEach(time => time.textContent = timeAgo(time.dateTime)), 30000);
+
+            // created_at is the message's ISO timestamp
+            const addBubble = ({ content, from_instructor, created_at = new Date().toISOString() }) => {
                 dialogMessages.querySelector('[data-dialog-notice]')?.remove();
 
                 const bubble = document.createElement('div');
@@ -88,9 +144,10 @@
                 text.className = 'whitespace-pre-line';
                 text.textContent = content;
 
-                const time = document.createElement('p');
-                time.className = `mt-1 text-[11px] ${from_instructor ? 'text-white/60' : 'text-gray-400'}`;
-                time.textContent = sent_at;
+                const time = document.createElement('time');
+                time.className = `mt-1 block text-[11px] ${from_instructor ? 'text-white/60' : 'text-gray-400'}`;
+                time.dateTime = created_at;
+                time.textContent = timeAgo(created_at);
 
                 bubble.append(text, time);
                 dialogMessages.append(bubble);
@@ -139,6 +196,29 @@
                     dialog.close();
             });
 
+            // The close button, the backdrop and Esc all fire 'close': mark what arrived while it was open as read
+            dialog.addEventListener('close', () => {
+                const ids = readWhileOpen.get();
+                if (!ids.length)
+                    return;
+
+                fetch(markReadUrl, {
+                    method: 'PATCH',
+                    keepalive: true,
+                    body: JSON.stringify({ ids }),
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                }).then(res => {
+                    // Determine whether the ids clear on a success request or not!
+                    if (res.ok)
+                        // deletes or clears the ids in the localstorage
+                        readWhileOpen.save(readWhileOpen.get().filter(id => !ids.includes(id)));
+                });
+            });
+
             dialogForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const content = dialogInput.value;
@@ -148,11 +228,11 @@
                 showDialogError('');
 
                 postMessage(dialogStudentId, content)
-                    .then(({ ok, message }) => {
+                    .then(({ ok, message, data }) => {
                         if (!ok)
                             return showDialogError(message || 'An error occurred');
 
-                        addBubble({ content, from_instructor: true, sent_at: 'just now' });
+                        addBubble({ content, from_instructor: true, created_at: data?.created_at });
                         dialogInput.value = '';
                     })
                     .catch(() => showDialogError('Something went wrong. Please try again.'))
@@ -302,6 +382,12 @@
                                             <span data-unread-dot title="{{ $unread }} unread {{ Str::plural('reply', $unread) }}" class="absolute -top-2 -right-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-bold text-white">{{ $unread }}</span>
                                         @endif
                                     </button>
+                                    @if($overdueStudentIds->contains($student->id))
+                                        <span data-overdue-badge class="inline-flex items-center rounded-2xl bg-orange-100 px-3.5 py-2 text-sm font-semibold text-orange-700">
+                                            <i class="fas fa-hourglass-half mr-2"></i>
+                                            Waiting 1d+
+                                        </span>
+                                    @endif
                                     <button class="inline-flex items-center rounded-2xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                                         <i class="fas fa-file-alt mr-2"></i>
                                         View assignments

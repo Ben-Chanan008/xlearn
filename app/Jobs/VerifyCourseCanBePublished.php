@@ -30,15 +30,15 @@ class VerifyCourseCanBePublished implements ShouldQueue
         $sectionsCount = $this->course->courseSections()->count();
         
         switch(true){
-            case $sectionsCount === 5 && $this->course->status !== 'published':
+            case $sectionsCount === Course::SECTIONS_TO_PUBLISH && $this->course->status !== 'published':
                 $this->course->update(['status' => 'published']);
                 Log::info("Course {$this->course->id} has been published.");
                 break;
-            case $sectionsCount > 5 && $this->course->status !== 'published':
+            case $sectionsCount > Course::SECTIONS_TO_PUBLISH && $this->course->status !== 'published':
                 $this->course->update(['status' => 'published']);
                 Log::info("Course {$this->course->id} has been published.");
                 break;
-            case $sectionsCount < 5 && $this->course->status === 'published':
+            case $sectionsCount < Course::SECTIONS_TO_PUBLISH && $this->course->status === 'published':
                 $this->course->update(['status' => 'pending']);
                 Log::info("Course {$this->course->id} has been reverted to draft.");
                 break;

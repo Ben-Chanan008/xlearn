@@ -21,7 +21,8 @@ class CourseSectionsContentFactory extends Factory
             'course_section_id' => CourseSection::factory(),
             'content_name' => fake()->sentence(4),
             'content_information' => fake()->paragraphs(2, true),
-            'files' => fake()->optional()->filePath(),
+            // No attachments: real ones are ['path', 'name', 'mime'] entries pointing at uploaded files, which seed data doesn't have
+            'files' => null,
             'content_type' => fake()->randomElement(['assignment', 'information']),
         ];
     }

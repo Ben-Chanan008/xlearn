@@ -22,6 +22,7 @@
                                     </div>
                                     <div>
                                         <h3 class="text-xl font-bold text-gray-800 mb-1">{{ $course->name }}</h3>
+                                        <x-draft-badge :course="$course" class="mb-2" />
                                         <p class="font-bold text-sm text-primary"><i class="fas fa-newspaper mr-2"></i>Course Code: {{ $course->course_code }}</p>
                                         <p class="text-sm text-gray-500 mb-3">
                                             <i class="fas fa-user-group"></i>

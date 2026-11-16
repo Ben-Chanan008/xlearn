@@ -29,11 +29,9 @@
                 </div>
             </div>
 
-            <div class="w-full my-4 p-3 bg-gray-100 rounded-xl flex gap-2 items-center">
-                <i class="fas fa-magnifying-glass"></i>
-                <input type="text" class="w-full outline-0" placeholder="Search..."/>
-            </div>
+            <x-live-search placeholder="Search courses..." />
 
+            <div data-search-results>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                 @forelse($courses as $course)
                     <a href="{{ route('courses.show', $course->slug) }}" class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300 flex flex-col group">
@@ -61,7 +59,7 @@
                                 </div>
                                 <div class="flex items-center text-sm text-gray-500">
                                     <i class="fas fa-users w-5 text-gray-400"></i>
-                                    <span class="ml-2"><span class="font-semibold text-gray-700">0</span> students enrolled</span>
+                                    <span class="ml-2"><span class="font-semibold text-gray-700">{{ $course->students->count() }}</span> students enrolled</span>
                                 </div>
                                 <div class="flex space-x-1">
                                     <i class="fas fa-calendar-alt text-gray-400"></i>
@@ -78,77 +76,68 @@
                         </div>
                     </a>
                 @empty
+                    @if(request('search'))
+                    <div class="col-span-full py-12 text-center bg-white rounded-3xl border border-dashed border-gray-300">
+                        <i class="fas fa-search text-4xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900">No courses match "{{ request('search') }}"</h3>
+                        <a href="{{ route('dashboard') }}" class="mt-4 inline-block text-sm font-bold text-primary hover:opacity-75">Clear search</a>
+                    </div>
+                    @else
                     <div class="col-span-full py-12 text-center bg-white rounded-3xl border border-dashed border-gray-300">
                         <i class="fas fa-book-open text-4xl text-gray-300 mb-4"></i>
                         <h3 class="text-lg font-medium text-gray-900">No courses available yet</h3>
                         <p class="text-gray-500">Check back later for new learning opportunities.</p>
                     </div>
+                    @endif
                 @endforelse
             </div>
             <div class="">
                 {{ $courses->links()  }}
             </div>
-            {{-- Course Leaders Section --}}
-            <div class="mt-16">
+        </div>
+            {{-- Course Leaders Section: todo: sth else will be added there --}}
+            {{-- <div class="mt-16">
                 <div class="flex items-center justify-between mb-8">
                     <x-header>Meet Our Course Leaders</x-header>
                 </div>
 
-                @php
-                    $leaders = [
-                        [
-                            'name' => 'Sarah Johnson',
-                            'achievement' => 'Top Rated Laravel Instructor',
-                            'medal' => 'fa-medal text-yellow-500',
-                            'summary' => 'A senior developer with 10+ years of experience in building enterprise-level applications with Laravel and Vue.js.',
-                            'color' => 'bg-red-50'
-                        ],
-                        [
-                            'name' => 'Michael Chen',
-                            'achievement' => 'Award Winning UI/UX Designer',
-                            'medal' => 'fa-award text-blue-500',
-                            'summary' => 'Creative lead who has worked with Fortune 500 companies to create intuitive and engaging digital experiences.',
-                            'color' => 'bg-blue-50'
-                        ],
-                        [
-                            'name' => 'Elena Rodriguez',
-                            'achievement' => 'JavaScript Pioneer',
-                            'medal' => 'fa-trophy text-orange-400',
-                            'summary' => 'Open source contributor and expert in modern JavaScript patterns, focusing on performance and scalability.',
-                            'color' => 'bg-yellow-50'
-                        ]
-                    ];
-                @endphp
-
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    @foreach($leaders as $leader)
-                        <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition duration-300 relative overflow-hidden group">
-                            <div class="absolute -right-4 -top-4 w-24 h-24 {{ $leader['color'] }} rounded-full opacity-50 group-hover:scale-110 transition duration-500"></div>
+                    @forelse($leaders as $leader)
+                        <a href="{{ route('instructors.show', $leader) }}" class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition duration-300 relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 w-24 h-24 bg-tea-green rounded-full opacity-50 group-hover:scale-110 transition duration-500"></div>
 
                             <div class="relative">
-                                <div class="flex items-center mb-4">
-                                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mr-4">
-                                        <i class="fas fa-user-tie text-gray-400 text-xl"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="text-lg font-bold text-gray-800">{{ $leader['name'] }}</h4>
-                                        <p class="text-xs font-semibold text-primary uppercase tracking-wider">{{ $leader['achievement'] }}</p>
+                                <div class="flex items-center mb-4 gap-4">
+                                    <x-avatar :user="$leader" />
+                                    <div class="min-w-0">
+                                        <h4 class="text-lg font-bold text-gray-800 group-hover:text-primary">{{ $leader->fullName() }}</h4>
+                                        @if($leader->instructorProfile->headline)
+                                            <p class="text-xs font-semibold text-golden uppercase tracking-wider">{{ $leader->instructorProfile->headline }}</p>
+                                        @endif
                                     </div>
                                 </div>
 
-                                <div class="flex items-center mb-4 p-2 bg-gray-50 rounded-xl">
-                                    <i class="fas {{ $leader['medal'] }} mr-2"></i>
-                                    <span class="text-xs font-bold text-gray-700">Honorary Member</span>
+                                <div class="flex items-center mb-4 p-2 bg-gray-50 rounded-xl gap-2">
+                                    @if($leader->rating !== null)
+                                        <x-star-rating :value="$leader->rating" class="text-xs" />
+                                        <span class="text-xs font-bold text-gray-700">{{ number_format($leader->rating, 1) }}</span>
+                                    @else
+                                        <i class="fas fa-seedling text-primary"></i>
+                                        <span class="text-xs font-bold text-gray-700">New instructor</span>
+                                    @endif
                                 </div>
 
                                 <p class="text-sm text-gray-600 leading-relaxed">
-                                    {{ $leader['summary'] }}
+                                    {{ Str::limit($leader->instructorProfile->bio, 140) }}
                                 </p>
+                                <p class="mt-4 text-sm font-bold text-primary">View profile <i class="fas fa-arrow-right ml-1 text-xs"></i></p>
                             </div>
-                        </div>
-                    @endforeach
+                        </a>
+                    @empty
+                        <p class="col-span-full text-center text-sm text-gray-500">Our instructors are still setting up their profiles.</p>
+                    @endforelse
                 </div>
-            </div>
+            </div> --}}
 
             {{-- Reviews Section --}}
             <div class="mt-24">
