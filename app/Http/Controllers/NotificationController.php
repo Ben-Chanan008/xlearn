@@ -20,7 +20,8 @@ class NotificationController extends Controller
 
     public function readAll(Request $request)
     {
-        $request->user()->unreadNotifications->markAsRead();
+        // One UPDATE for all of them, rather than loading each and saving it separately
+        $request->user()->unreadNotifications()->update(['read_at' => now()]);
 
         return back();
     }
