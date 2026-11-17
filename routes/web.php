@@ -8,6 +8,7 @@ use App\Http\Controllers\InstructorController;
 use App\Http\Controllers\InstructorProfileController;
 use App\Http\Controllers\InstructorReviewController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +31,9 @@ Route::middleware('auth')->group(function () {
     Route::get('instructors/{user}/profile', [InstructorProfileController::class, 'show'])->name('instructors.show');
     Route::put('instructors/{user}/update-profile', [InstructorProfileController::class, 'update'])->name('instructors.update');
     Route::delete('delete-profile/{user}', [InstructorProfileController::class, 'deleteProfile'])->name('instructors.delete');
+
+    Route::get('notifications/{id}/open', [NotificationController::class, 'open'])->name('notifications.open');
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
 });
 
 Route::prefix('student')->middleware(['auth'])->group(function (){

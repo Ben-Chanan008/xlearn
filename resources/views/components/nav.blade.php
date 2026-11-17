@@ -66,6 +66,7 @@
                         <span class="ml-2 font-semibold">Logout</span>
                     </a>
                 </div>
+                <x-notification-bell />
             </div>
         @else
             <div class="flex justify-center space-x-3">
