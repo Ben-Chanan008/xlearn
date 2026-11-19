@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
+use App\Notifications\CourseRemoved;
+use Illuminate\Support\Facades\Notification;
 
 class Course extends Model
 {
@@ -61,7 +63,19 @@ class Course extends Model
     // Soft-deleting a course soft-deletes its sections too
     protected static function booted(): void
     {
-        static::deleting(fn (Course $course) => $course->courseSections->each->delete());
+        static::deleting(function (Course $course) {
+            $course->courseSections->each->delete();
+
+            // Purging an already removed course isn't news, and its owner may be gone by then
+            if ($course->isForceDeleting())
+                return;
+
+            // Covers both a single course delete and an instructor deleting their profile (question 5)
+            Notification::send(
+                $course->students->concat([$course->owner]),
+                new CourseRemoved($course->name, $course->owner->fullName(), $course->owner->id),
+            );
+        });
     }
 
     public function courseSections(): HasMany
