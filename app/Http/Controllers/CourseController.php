@@ -6,6 +6,8 @@ use App\Http\Requests\CourseRequest;
 use App\Models\CardDetail;
 use App\Models\Course;
 use App\Models\CourseSectionsContent;
+use App\Notifications\EnrollmentConfirmed;
+use App\Notifications\StudentEnrolled;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -58,12 +60,18 @@ class CourseController extends Controller
 
     public function enroll(Request $request, Course $course)
     {
+        if (Gate::allows('enrolled', $course))
+            return redirect()->route('courses.learn', $course);
+
         return view('course.enroll', compact('course'));
     }
 
     public function checkout(Request $request, Course $course)
     {
         Gate::authorize('enroll', $course);
+
+        if (!Gate::denies('enrolled', $course))
+            abort(403);
 
         //check seating isn't full
         //check access is still valid
@@ -84,8 +92,6 @@ class CourseController extends Controller
                 return back()->with('error', 'Course is full, wait for the next available seats');
         }
 
-        // charge the user. send notification of transaction
-
         try {
             CardDetail::create([
                 'user_id' => $request->user()->id,
@@ -94,8 +100,13 @@ class CourseController extends Controller
                 'expiry_date' => $request->expiry_date,
                 'cvv' => Hash::make($request->cvv),
             ]);
+            //TODO: charge the user
 
             $course->students()->syncWithoutDetaching($request->user()->id);
+
+            $request->user()->notify(new EnrollmentConfirmed($course));
+            $course->owner->notify(new StudentEnrolled($course, $request->user()));
+
             return redirect()->route('my-courses')->with('success', 'Course enrolled successfully');
         } catch (\Exception $e) {
 //            dd($e->getMessage());
