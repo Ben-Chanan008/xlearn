@@ -2,6 +2,8 @@
 
 use App\Jobs\CheckInactiveMessages;
 use App\Jobs\RecalculateInstructorRatings;
+use App\Jobs\SendAssignmentDueReminders;
+use App\Jobs\SendReplyReminders;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -28,6 +30,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ->when(fn () => date('W') % 3 === 1); // Run every 3 weeks
 
         $schedule->job(new RecalculateInstructorRatings())->hourly();
+
+        $schedule->job(new SendReplyReminders())->hourly();
+        $schedule->job(new SendAssignmentDueReminders())->dailyAt('09:00');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

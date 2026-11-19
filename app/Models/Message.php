@@ -15,6 +15,7 @@ class Message extends Model
         'content',
         'awaits_reply',
         'replied_at',
+        'reminded_at',
     ];
 
     protected function casts(): array
@@ -22,6 +23,7 @@ class Message extends Model
         return [
             'awaits_reply' => 'boolean',
             'replied_at' => 'datetime',
+            'reminded_at' => 'datetime',
         ];
     }
 
