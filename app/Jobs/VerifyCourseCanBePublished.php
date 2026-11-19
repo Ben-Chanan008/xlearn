@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Course;
+use App\Notifications\CourseStatusChanged;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -32,14 +33,17 @@ class VerifyCourseCanBePublished implements ShouldQueue
         switch(true){
             case $sectionsCount === Course::SECTIONS_TO_PUBLISH && $this->course->status !== 'published':
                 $this->course->update(['status' => 'published']);
+                $this->course->owner->notify(new CourseStatusChanged($this->course, 'published'));
                 Log::info("Course {$this->course->id} has been published.");
                 break;
             case $sectionsCount > Course::SECTIONS_TO_PUBLISH && $this->course->status !== 'published':
                 $this->course->update(['status' => 'published']);
+                $this->course->owner->notify(new CourseStatusChanged($this->course, 'published'));
                 Log::info("Course {$this->course->id} has been published.");
                 break;
             case $sectionsCount < Course::SECTIONS_TO_PUBLISH && $this->course->status === 'published':
                 $this->course->update(['status' => 'pending']);
+                $this->course->owner->notify(new CourseStatusChanged($this->course, 'pending'));
                 Log::info("Course {$this->course->id} has been reverted to draft.");
                 break;
             default:

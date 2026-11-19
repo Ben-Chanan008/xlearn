@@ -8,8 +8,10 @@ use App\Http\Requests\UpdateCourseSectionRequest;
 use App\Jobs\VerifyCourseCanBePublished;
 use App\Models\Course;
 use App\Models\CourseSection;
+use App\Notifications\NewCourseContent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class CourseSectionController extends Controller
@@ -26,7 +28,7 @@ class CourseSectionController extends Controller
         $storedPaths = [];
 
         try {
-            DB::transaction(function () use ($validated, $course, &$storedPaths) {
+            $section = DB::transaction(function () use ($validated, $course, &$storedPaths) {
                 // New sections go at the end of the course
                 $section = $course->courseSections()->create([
                     'section_name' => $validated['section_name'],
@@ -40,7 +42,13 @@ class CourseSectionController extends Controller
 
                     $section->sectionContents()->create($this->contentAttributes($content, $files));
                 }
+
+                return $section;
             });
+
+            // Only students of a live course; drafts aren't visible to them (question 6)
+            if (! $course->isDraft())
+                Notification::send($course->students, new NewCourseContent($section));
 
             // Shown by the success banner on the page the browser goes to next
             session()->flash('success', 'Section created successfully');
