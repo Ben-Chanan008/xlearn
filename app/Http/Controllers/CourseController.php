@@ -6,6 +6,7 @@ use App\Http\Requests\CourseRequest;
 use App\Models\CardDetail;
 use App\Models\Course;
 use App\Models\CourseSectionsContent;
+use App\Notifications\AssignmentSubmitted;
 use App\Notifications\EnrollmentConfirmed;
 use App\Notifications\StudentEnrolled;
 use Illuminate\Http\Request;
@@ -171,7 +172,8 @@ class CourseController extends Controller
                 ]);
             }
 
-            //Notify the instructor of the submission (assuming you have a notification system in place)
+            // Once per submission, not once per file
+            $course->owner->notify(new AssignmentSubmitted($courseSectionContent, $request->user()));
 
             return back()->with('success', 'Assignment submitted successfully.');
         } catch (\Exception $e) {
