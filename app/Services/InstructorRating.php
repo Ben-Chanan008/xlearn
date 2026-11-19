@@ -41,7 +41,9 @@ class InstructorRating
      */
     public static function refresh(User $instructor): void
     {
-        $points = Message::where('receiver_id', $instructor->id)
+        // Inactive messages still count toward the 90-day window
+        $points = Message::withoutGlobalScope('active')
+            ->where('receiver_id', $instructor->id)
             ->where('awaits_reply', true)
             ->where('created_at', '>=', now()->subDays(self::WINDOW_DAYS))
             ->get()

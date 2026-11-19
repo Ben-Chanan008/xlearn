@@ -45,11 +45,11 @@ class StudentConversationTest extends TestCase
         $this->openPage()->assertOk()->assertSeeInOrder(['Welcome to the course', 'Thanks, I have a question']);
     }
 
-    public function test_it_shows_inactive_messages(): void
+    public function test_it_hides_inactive_messages(): void
     {
         $this->message($this->course->owner, $this->student, 'An old announcement', ['status' => 'inactive']);
 
-        $this->openPage()->assertOk()->assertSee('An old announcement');
+        $this->openPage()->assertOk()->assertDontSee('An old announcement');
     }
 
     public function test_it_does_not_show_another_students_messages(): void

@@ -33,6 +33,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $schedule->job(new SendReplyReminders())->hourly();
         $schedule->job(new SendAssignmentDueReminders())->dailyAt('09:00');
+
+        $schedule->command('model:prune')->daily();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

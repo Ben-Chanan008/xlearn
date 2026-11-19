@@ -37,7 +37,7 @@ class StudentEnrolled extends Notification implements ShouldQueue
             ->subject("New student in {$this->course->name}")
             ->greeting("Hi {$notifiable->first_name},")
             ->line("{$this->student->fullName()} enrolled in {$this->course->name}.")
-            ->action('View students', route('instructor.courses.students', $this->course));
+            ->action('View students', route('instructor.courses.students', [$this->course, 'student' => $this->student->id]));
     }
 
     /**
@@ -50,7 +50,7 @@ class StudentEnrolled extends Notification implements ShouldQueue
         return [
             'title' => 'New student',
             'body' => "{$this->student->shortName()} enrolled in {$this->course->name}",
-            'url' => route('instructor.courses.students', $this->course),
+            'url' => route('instructor.courses.students', [$this->course, 'student' => $this->student->id]),
             'icon' => 'fa-user-plus',
             'course_id' => $this->course->id,
             'student_id' => $this->student->id,

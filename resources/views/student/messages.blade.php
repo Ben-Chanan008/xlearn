@@ -3,12 +3,15 @@
 		window.onload = () => {
 			const me = "{{ auth()->id() }}"
 
-			Echo.private('message.{{ $course->id }}')
+			Echo.private('message.{{ $course->id }}.{{ auth()->id() }}.{{ $course->instructor_id }}')
 				.listen('MessageSent', ({ message }) => { 
 					console.log(message);
 					if(parseInt(me) != parseInt(message.sender_id))
 						addBubble(message.content, false, message.created_at)
 				})
+
+			// While this page is open the server knows you're reading the conversation, so it sends no notifications for it
+			Echo.join('conversation.{{ $course->id }}.{{ auth()->id() }}.{{ $course->instructor_id }}');
 
 			// Keeps every "x minutes ago" in the thread current while the page stays open
 			setInterval(() => document.querySelectorAll('[data-thread] time[datetime]')

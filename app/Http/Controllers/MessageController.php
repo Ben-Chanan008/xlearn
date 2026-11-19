@@ -9,6 +9,7 @@ use App\Models\InstructorReview;
 use App\Models\Message;
 use App\Models\Course;
 use App\Models\User;
+use App\Notifications\NewMessage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class MessageController extends Controller
 
     public function showMessages(Course $course)
     {
-        // Every message both ways, whatever its status, so the student sees their whole history
+        // Active messages both ways (the last 3 weeks)
         $messages = Message::where('course_id', $course->id)
             ->between(Auth::id(), $course->instructor_id)
             ->oldest()
@@ -32,6 +33,8 @@ class MessageController extends Controller
             ->where('receiver_id', Auth::id())
             ->where('is_read', false)
             ->update(['is_read' => true]);
+
+        NewMessage::markConversationRead(Auth::user(), $course->id, $course->instructor_id);
 
         // Pre-fills the review form if the student already rated this instructor
         $review = InstructorReview::where('course_id', $course->id)->where('student_id', Auth::id())->first();
@@ -48,7 +51,7 @@ class MessageController extends Controller
 
         $instructorId = Auth::id();
 
-        // Every message whatever its status, same as the student's page
+        // Active messages only, same as the student's page
         $messages = Message::where('course_id', $course->id)
             ->between($instructorId, $student->id)
             ->oldest()
@@ -60,6 +63,8 @@ class MessageController extends Controller
             ->where('receiver_id', $instructorId)
             ->where('is_read', false)
             ->update(['is_read' => true]);
+
+        NewMessage::markConversationRead(Auth::user(), $course->id, $student->id);
 
         return response()->json([
             'student' => [
@@ -82,7 +87,11 @@ class MessageController extends Controller
      */
     public function markRead(MarkMessagesReadRequest $request, Course $course)
     {
-        Message::whereIn('id', $request->validated('ids'))->update(['is_read' => true]);
+        $messages = Message::whereIn('id', $request->validated('ids'));
+        $senderIds = $messages->clone()->distinct()->pluck('sender_id');
+        $messages->update(['is_read' => true]);
+
+        $senderIds->each(fn ($senderId) => NewMessage::markConversationRead($request->user(), $course->id, $senderId));
 
         return response()->json(['message' => 'Messages marked as read.']);
     }
@@ -119,9 +128,12 @@ class MessageController extends Controller
                 broadcast(new MessageSent($this->message))->toOthers();
 
                 // Any instructor message to the student stops the clock
+                // Inactive waits close too, so none are left open forever
                 if ($fromInstructor)
-                    $openWait()->update(['replied_at' => now()]);
+                    $openWait()->withoutGlobalScope('active')->update(['replied_at' => now()]);
             });
+
+            $this->message->receiver->notify(new NewMessage($this->message));
 
             return response()->json(['message' => 'Message sent successfully.', 'data' => $this->message ], 200);
         } catch (\Exception $e) {

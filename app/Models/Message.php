@@ -27,6 +27,13 @@ class Message extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::addGlobalScope('active', function (Builder $query) {
+            $query->where('status', 'active');
+        });
+    }
+
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');

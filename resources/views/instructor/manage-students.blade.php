@@ -3,9 +3,9 @@
         const url = new URL("{{ url()->full() }}");
         let activeStudentId = url.searchParams.get('student');
         // console.log(url.searchParams.get('student'));
-
         window.addEventListener('DOMContentLoaded', (e) => {
-            Echo.private('message.{{ $course->id }}')
+            const listen = (activeId) => {
+                Echo.private('message.{{ $course->id }}.' + activeId + '.{{ auth()->id() }}')
                 .listen('MessageSent', ({ message }) => {
                     if(message.sender_id == {{ auth()->id() }}) return;
 
@@ -31,6 +31,8 @@
                     dot.textContent = count;
                     dot.title = `${count} unread ${count === 1 ? 'reply' : 'replies'}`;
                 });
+            }
+            listen(activeStudentId);
 
             const studentCards = [...document.querySelectorAll(`[data-student-card]`)];
             const formSelect = document.querySelector('#select-student select');
@@ -163,6 +165,9 @@
                 showDialogNotice('Loading conversation...');
                 dialog.showModal();
 
+                // While the dialog is open the server knows you're reading this conversation, so it sends no notifications for it
+                Echo.join(`conversation.{{ $course->id }}.${dialogStudentId}.{{ auth()->id() }}`);
+
                 fetch(conversationUrl.replace('__student__', dialogStudentId), { headers: { 'Accept': 'application/json' } })
                     .then(async res => {
                         if (!res.ok)
@@ -219,6 +224,9 @@
                 });
             });
 
+            // Closed, so you're no longer reading it: new messages notify again
+            dialog.addEventListener('close', () => Echo.leave(`conversation.{{ $course->id }}.${dialogStudentId}.{{ auth()->id() }}`));
+
             dialogForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const content = dialogInput.value;
@@ -230,7 +238,7 @@
                 postMessage(dialogStudentId, content)
                     .then(({ ok, message, data }) => {
                         if (!ok)
-                            return showDialogError(message || 'An error occurred');
+                            return showDialogError('An error occurred');
 
                         addBubble({ content, from_instructor: true, created_at: data?.created_at });
                         dialogInput.value = '';
@@ -243,9 +251,20 @@
             
             formSelect.addEventListener('change', (e) => {
                 activeStudentId = e.target.value;
-                toggleCardVisibility(activeStudentId);
+
+                let oldStudentId = url.searchParams.get('student')
+                url.searchParams.set('student', activeStudentId)
+                history.replaceState(null, '', url);
+            
+                // leave the listener
+                Echo.leave('message.{{ $course->id }}.' + oldStudentId + '.{{ auth()->id() }}')
                 
-                // console.log(activeStudentId);   
+                /* Listen to the active student's channel */
+                listen(activeStudentId);
+
+                console.log(Object.keys(Echo.connector.channels))
+
+                toggleCardVisibility(activeStudentId);
             });
 
             const toggleCardVisibility = (activeStudentId) => {
@@ -256,11 +275,17 @@
                     else
                         card.classList.add('hidden');
                 });
-
+                
                 messageStudentInput.value = activeStudentId ? document.querySelector(`#student-${activeStudentId} h3`).textContent : '';
+                
             }
            
             toggleCardVisibility(activeStudentId);
+
+            // Message notifications link here with ?conversation=, so open that student's conversation straight away
+            const conversationStudentId = url.searchParams.get('conversation');
+            if (conversationStudentId)
+                document.querySelector(`[data-message-student="${CSS.escape(conversationStudentId)}"]`)?.click();
 
         });
     </script>

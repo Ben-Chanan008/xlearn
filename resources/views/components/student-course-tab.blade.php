@@ -13,12 +13,12 @@
 @endphp
 
 {{-- The messages page shows new messages itself, so only the other tabs bump the dot --}}
-{{-- @unless(request()->routeIs('course.messages'))
+@unless(request()->routeIs('course.messages'))
     @push('scripts')
         <script>
             // Echo loads as a module, so wait for it before subscribing
             window.addEventListener('DOMContentLoaded', () => {
-                Echo.private('message.{{ $course->id }}')
+                Echo.private('message.{{ $course->id }}.{{ auth()->id() }}.{{ $course->instructor_id }}')
                     .listen('MessageSent', ({ message }) => {
                         if (message.receiver_id != {{ auth()->id() }})
                             return;
@@ -39,7 +39,7 @@
             });
         </script>
     @endpush
-@endunless --}}
+@endunless
 <div class="py-8 px-4 sm:px-6 lg:px-8">
     <x-back-link>Go Back</x-back-link>
 

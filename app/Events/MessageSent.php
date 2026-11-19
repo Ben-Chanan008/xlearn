@@ -21,8 +21,7 @@ class MessageSent implements ShouldBroadcast, ShouldDispatchAfterCommit
      */
     public function __construct(
         public Message $message
-    )
-    {
+    ) {
         //
     }
 
@@ -33,8 +32,13 @@ class MessageSent implements ShouldBroadcast, ShouldDispatchAfterCommit
      */
     public function broadcastOn(): array
     {
+        $instructorId = $this->message->course->instructor_id;
+        $studentId = $this->message->sender_id == $instructorId
+            ? $this->message->receiver_id
+            : $this->message->sender_id;
+
         return [
-            new PrivateChannel('message.' . $this->message->course_id),
+            new PrivateChannel("message.{$this->message->course_id}.{$studentId}.{$instructorId}")
         ];
     }
 }
