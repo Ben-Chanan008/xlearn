@@ -33,8 +33,14 @@ class ReplyOverdue extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject("{$this->message->sender->shortName()} is waiting for a reply")
             ->greeting("Hi {$notifiable->first_name},")
-            ->line($this->body())
-            ->action('Reply now', $this->url());
+            // The rating warning goes in the callout, not the line
+            ->line("{$this->message->sender->shortName()} has been waiting over a day for a reply in {$this->message->course->name}.")
+            ->action('Reply now', $this->url())
+            ->markdown('notifications::email', [
+                'eyebrow' => 'Messages',
+                'accent' => 'golden',
+                'callout' => 'Slow replies lower your rating.',
+            ]);
     }
 
     /**

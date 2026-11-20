@@ -37,8 +37,15 @@ class EnrollmentConfirmed extends Notification implements ShouldQueue
             ->subject("You're enrolled in {$this->course->name}")
             ->greeting("Hi {$notifiable->first_name},")
             ->line("You're now enrolled in {$this->course->name}.")
-            ->line('Price paid: $' . number_format((float) $this->course->price, 2))
-            ->action('Start learning', route('courses.learn', $this->course->slug));
+            ->action('Start learning', route('courses.learn', $this->course->slug))
+            ->markdown('notifications::email', [
+                'eyebrow' => 'Enrollment',
+                'details' => [
+                    'Course' => $this->course->name,
+                    'Instructor' => $this->course->owner->fullName(),
+                    'Price paid' => '$' . number_format((float) $this->course->price, 2),
+                ],
+            ]);
     }
 
     /**

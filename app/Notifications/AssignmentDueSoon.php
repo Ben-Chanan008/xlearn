@@ -34,7 +34,16 @@ class AssignmentDueSoon extends Notification implements ShouldQueue
             ->subject("{$this->assignment->content_name} is due soon")
             ->greeting("Hi {$notifiable->first_name},")
             ->line($this->body())
-            ->action('Submit it', $this->url());
+            ->action('Submit it', $this->url())
+            ->markdown('notifications::email', [
+                'eyebrow' => 'Assignment',
+                'accent' => 'golden',
+                'details' => [
+                    'Assignment' => $this->assignment->content_name,
+                    'Course' => $this->assignment->courseSection->course->name,
+                    'Due' => $this->assignment->due_at->format('M j \a\t g:i A'),
+                ],
+            ]);
     }
 
     /**

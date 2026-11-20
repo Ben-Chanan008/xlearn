@@ -1,0 +1,318 @@
+/* xlearn email theme: colors match resources/css/app.css (primary #3D2B1F, golden #996515, tea-green #D0F0C0) */
+
+/* Base */
+
+body,
+body *:not(html):not(style):not(br):not(tr):not(code) {
+    box-sizing: border-box;
+    font-family: 'Nunito', Helvetica, Arial, sans-serif;
+    position: relative;
+}
+
+body {
+    -webkit-text-size-adjust: none;
+    background-color: #D0F0C0;
+    color: #57534E;
+    height: 100%;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+    width: 100% !important;
+}
+
+p,
+ul,
+ol,
+blockquote {
+    line-height: 1.6;
+    text-align: left;
+}
+
+a {
+    color: #996515;
+}
+
+a img {
+    border: none;
+}
+
+/* Typography */
+
+h1 {
+    color: #3D2B1F;
+    font-size: 24px;
+    font-weight: 900;
+    margin-top: 0;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+h2 {
+    color: #3D2B1F;
+    font-size: 18px;
+    font-weight: 800;
+    margin-top: 0;
+    text-align: left;
+}
+
+p {
+    color: #57534E;
+    font-size: 15px;
+    margin-top: 0;
+}
+
+strong {
+    color: #3D2B1F;
+}
+
+.break-all {
+    word-break: break-all;
+}
+
+/* Layout */
+
+.wrapper {
+    background-color: #D0F0C0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.content {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+/* Header: the logo above the card */
+
+.header {
+    padding: 40px 0 24px;
+    text-align: center;
+}
+
+.logo {
+    border: 0;
+    border-radius: 6px;
+    height: 40px;
+    max-height: 40px;
+}
+
+/* Card */
+
+.body {
+    background-color: #D0F0C0;
+    border: hidden !important;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.inner-body {
+    background-color: #FFFFFF;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(61, 43, 31, 0.08);
+    margin: 0 auto;
+    padding: 0;
+    width: 560px;
+}
+
+/* The strip across the top of the card */
+
+.accent-green {
+    border-top: 6px solid #D0F0C0;
+}
+
+.accent-golden {
+    border-top: 6px solid #996515;
+}
+
+.accent-grey {
+    border-top: 6px solid #D6D3D1;
+}
+
+.content-cell {
+    max-width: 100vw;
+    padding: 36px 32px;
+}
+
+/* Label above the greeting */
+
+.eyebrow {
+    color: #996515;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+}
+
+/* Details box */
+
+.details {
+    background-color: #FAF6EF;
+    border-radius: 12px;
+    margin: 8px 0 24px;
+    width: 100%;
+}
+
+.details-cell {
+    padding: 8px 20px;
+}
+
+.details-label {
+    color: #78716C;
+    font-size: 14px;
+    padding: 8px 16px 8px 0;
+}
+
+.details-value {
+    color: #3D2B1F;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 8px 0;
+    text-align: right;
+}
+
+.details-divider {
+    border-top: 1px solid #ECE7DF;
+}
+
+/* Callout */
+
+.callout {
+    margin: 8px 0 24px;
+    width: 100%;
+}
+
+.callout-content {
+    background-color: #FBF3E4;
+    border-left: 4px solid #996515;
+    border-radius: 0 12px 12px 0;
+    color: #3D2B1F;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 16px 20px;
+}
+
+/* Button */
+
+.action {
+    margin: 8px 0 32px;
+    padding: 0;
+    width: 100%;
+}
+
+.button {
+    -webkit-text-size-adjust: none;
+    border-radius: 12px;
+    color: #FFFFFF;
+    display: inline-block;
+    font-size: 15px;
+    font-weight: 700;
+    overflow: hidden;
+    text-align: center;
+    text-decoration: none;
+}
+
+.button-primary,
+.button-success,
+.button-error {
+    background-color: #3D2B1F;
+    border-bottom: 14px solid #3D2B1F;
+    border-left: 28px solid #3D2B1F;
+    border-right: 28px solid #3D2B1F;
+    border-top: 14px solid #3D2B1F;
+}
+
+/* "Button not working?" section at the bottom of the card */
+
+.subcopy-cell {
+    background-color: #FAFAF9;
+    border-radius: 0 0 16px 16px;
+    border-top: 1px solid #F5F5F4;
+    padding: 20px 32px;
+}
+
+.subcopy p {
+    color: #78716C;
+    font-size: 12px;
+    margin: 0;
+}
+
+.subcopy a {
+    color: #996515;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* Footer under the card */
+
+.footer {
+    margin: 0 auto;
+    padding: 0;
+    text-align: center;
+    width: 560px;
+}
+
+.footer .content-cell {
+    padding: 24px 32px 40px;
+}
+
+.footer p {
+    color: #8A7F77;
+    font-size: 12px;
+    margin: 0 0 4px;
+    text-align: center;
+}
+
+.footer a {
+    color: #3D2B1F;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* Panel and table, for mails that use Laravel's own components */
+
+.panel {
+    border-left: 4px solid #996515;
+    margin: 21px 0;
+}
+
+.panel-content {
+    background-color: #FAF6EF;
+    color: #57534E;
+    padding: 16px;
+}
+
+.panel-content p {
+    color: #57534E;
+}
+
+.panel-item {
+    padding: 0;
+}
+
+.panel-item p:last-of-type {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.table table {
+    margin: 24px auto;
+    width: 100%;
+}
+
+.table th {
+    border-bottom: 1px solid #ECE7DF;
+    margin: 0;
+    padding-bottom: 8px;
+}
+
+.table td {
+    color: #57534E;
+    font-size: 15px;
+    line-height: 18px;
+    margin: 0;
+    padding: 10px 0;
+}

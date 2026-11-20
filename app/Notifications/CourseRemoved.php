@@ -47,7 +47,8 @@ class CourseRemoved extends Notification implements ShouldQueue
             ->subject("{$this->courseName} has been removed")
             ->greeting("Hi {$notifiable->first_name},")
             ->line($this->body($notifiable))
-            ->action('My courses', $this->url($notifiable));
+            ->action('My courses', $this->url($notifiable))
+            ->markdown('notifications::email', ['eyebrow' => 'Your courses', 'accent' => 'grey']);
     }
 
     /**

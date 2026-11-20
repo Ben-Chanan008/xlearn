@@ -37,7 +37,8 @@ class StudentEnrolled extends Notification implements ShouldQueue
             ->subject("New student in {$this->course->name}")
             ->greeting("Hi {$notifiable->first_name},")
             ->line("{$this->student->fullName()} enrolled in {$this->course->name}.")
-            ->action('View students', route('instructor.courses.students', [$this->course, 'student' => $this->student->id]));
+            ->action('View students', route('instructor.courses.students', [$this->course, 'student' => $this->student->id]))
+            ->markdown('notifications::email', ['eyebrow' => 'Your students']);
     }
 
     /**

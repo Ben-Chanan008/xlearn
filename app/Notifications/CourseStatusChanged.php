@@ -37,7 +37,14 @@ class CourseStatusChanged extends Notification implements ShouldQueue
             ->subject($this->title())
             ->greeting("Hi {$notifiable->first_name},")
             ->line($this->body())
-            ->action('Manage course', route('instructor.courses.manage', $this->course));
+            ->action('Manage course', route('instructor.courses.manage', $this->course))
+            ->markdown('notifications::email', $this->status === 'published'
+                ? ['eyebrow' => 'Course status']
+                : [
+                    'eyebrow' => 'Course status',
+                    'accent' => 'golden',
+                    'callout' => "Students can't see this course until it has " . Course::SECTIONS_TO_PUBLISH . ' sections.',
+                ]);
     }
 
     /**
