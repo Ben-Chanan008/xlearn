@@ -27,7 +27,7 @@ class NewMessage extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     /**
@@ -35,6 +35,10 @@ class NewMessage extends Notification implements ShouldQueue
      */
     public function shouldSend(User $notifiable, string $channel): bool
     {
+        // Broadcast only what the database job saved; its unread check would find that same row
+        if ($channel === 'broadcast')
+            return $notifiable->notifications()->whereKey($this->id)->exists();
+
         return ! $this->message->fresh()->is_read
             && ! $this->isViewing($notifiable)
             && ! self::forConversation($notifiable, $this->message->course_id, $this->message->sender_id)

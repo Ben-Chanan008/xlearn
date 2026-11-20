@@ -8,6 +8,9 @@ Broadcast::channel('order.{}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
+// Each user can only listen to their own notifications (the bell)
+Broadcast::channel('App.Models.User.{id}', fn ($user, $id) => (int) $user->id === (int) $id);
+
 Broadcast::channel('message.{courseId}.{senderId}.{receiverId}', function ($user, $courseId, $senderId, $receiverId) {
     $message = Message::where('course_id', $courseId)->between($senderId, $receiverId)
         ->exists();

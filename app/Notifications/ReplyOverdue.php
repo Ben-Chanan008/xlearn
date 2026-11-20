@@ -25,7 +25,7 @@ class ReplyOverdue extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['mail', 'database', 'broadcast'];
     }
 
     public function toMail(User $notifiable): MailMessage

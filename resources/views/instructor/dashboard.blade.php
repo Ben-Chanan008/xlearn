@@ -66,7 +66,7 @@
                                     <p class="font-bold text-gray-900">{{ $waiting->sender->fullName() }} <span class="text-xs font-bold text-gray-500">Course {{ $waiting->course->course_code }}</span></p>
                                     <p class="truncate text-sm text-gray-500"><span class="text-golden font-bold">Course:</span> {{ $waiting->course->name }}</p>
                                 </div>
-                                <a href="{{ route('instructor.courses.students', $waiting->course) }}" class="shrink-0 text-sm font-bold text-primary hover:opacity-75">
+                                <a href="{{ route('instructor.courses.students', [$waiting->course, 'student' => $waiting->sender->id]) }}" class="shrink-0 text-sm font-bold text-primary hover:opacity-75">
                                     Waiting {{ $waiting->created_at->diffForHumans(null, true) }} <i class="fas fa-arrow-right ml-1 text-xs"></i>
                                 </a>
                             </li>

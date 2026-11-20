@@ -8,7 +8,9 @@ use App\Models\User;
 use App\Notifications\NewMessage;
 use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\Events\BroadcastNotificationCreated;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Event;
 use Mockery;
 use Pusher\Pusher;
 use Tests\TestCase;
@@ -192,5 +194,19 @@ class NewMessageNotificationTest extends TestCase
             ->assertOk();
 
         $this->assertCount(0, $this->unread($this->instructor));
+    }
+
+    public function test_it_broadcasts_only_the_notifications_it_saved(): void
+    {
+        Event::fake([BroadcastNotificationCreated::class]);
+
+        // The second message is skipped for the database, so it isn't broadcast either
+        $this->send($this->student, $this->instructor);
+        $this->send($this->student, $this->instructor);
+
+        $saved = $this->unread($this->instructor)->sole();
+        Event::assertDispatchedTimes(BroadcastNotificationCreated::class, 1);
+        Event::assertDispatched(BroadcastNotificationCreated::class, fn ($event) =>
+            $event->notification->id === $saved->id && $event->notifiable->is($this->instructor));
     }
 }

@@ -5,6 +5,10 @@
         // console.log(url.searchParams.get('student'));
         window.addEventListener('DOMContentLoaded', (e) => {
             const listen = (activeId) => {
+                // No student yet, or already listening to this one
+                if (!activeId || Echo.connector.channels[`private-message.{{ $course->id }}.${activeId}.{{ auth()->id() }}`])
+                    return;
+
                 Echo.private('message.{{ $course->id }}.' + activeId + '.{{ auth()->id() }}')
                 .listen('MessageSent', ({ message }) => {
                     if(message.sender_id == {{ auth()->id() }}) return;
@@ -284,8 +288,11 @@
 
             // Message notifications link here with ?conversation=, so open that student's conversation straight away
             const conversationStudentId = url.searchParams.get('conversation');
-            if (conversationStudentId)
+            if (conversationStudentId) {
+                // So the open dialog gets that student's new messages live
+                listen(conversationStudentId);
                 document.querySelector(`[data-message-student="${CSS.escape(conversationStudentId)}"]`)?.click();
+            }
 
         });
     </script>
